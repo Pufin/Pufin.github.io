@@ -2,4 +2,4 @@
 
 
 
-thanks github for the free webhosting
+shoutout to github for the free webhosting
