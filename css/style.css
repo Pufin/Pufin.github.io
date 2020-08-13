@@ -134,16 +134,19 @@ p a:hover {
 	padding: 0 0 44px;
 }
 #body img.figure {
-	position: absolute;
+	position: relative;
+	display: block;
 	float: right;
-	top: 360px;
-	left: 1079px;
+	top: 0px;
+	left: 50px;
 	max-width: 100%;
 	width: auto;
 	z-index: 0;
+	font-size: 0;
 }
 #body div#tagline {
-	float: left;
+	display: fixed;
+	top: 1000px;
 	margin: 0px 0 0 25px;
 	max-width: 510px;
 	z-index: 2;
@@ -152,7 +155,7 @@ p a:hover {
 	background: url(../images/bg-separator.png) no-repeat center bottom;
 	color: #21a51e;
 	font-family: 'nixie_oneregular';
-	font-size: 100px;
+	font-size: 65px;
 	font-weight: normal;
 	line-height: 100px;
 	margin: 0;
@@ -164,18 +167,11 @@ p a:hover {
 #body div#tagline p {
 	color: #21a51e;
 	font-family: 'nixie_oneregular';
-	font-size: 100px;
+	font-size: 120px;
 	line-height: 100px;
 	padding: 43px 0 0;
 	text-align: center;
 	z-index: 2;
-}
-#body div.content {
-	overflow: hidden;
-}
-#body div.content > div {
-	float: left;
-	width: 510px;
 }
 #body div.content h3,
 #body form h3,
