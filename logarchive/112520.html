@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Raid Timeline</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #272b30;
+            font-family: Helvetica, sans-serif;
+            overflow-y: scroll;
+        }
+
+        /* Header stuff */
+        .header {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .noselect {
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Old versions of Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
+        }
+
+        .box {
+            margin-top: 20px;
+            margin-bottom: 0px;
+            padding: 0px;
+            position: relative;
+            left: 25%;
+            border-style: solid;
+            border-width: 5px;
+            border-color: #aaa;
+            width: 50%;
+            border-radius: 6px;
+            background-color: #444950;
+            cursor: pointer;
+        }
+
+            .box:hover {
+                background-color: #555;
+            }
+
+        .text {
+            color: #aaa;
+            text-align: center;
+            padding-bottom: 10px;
+        }
+
+
+        /* The actual timeline (the vertical ruler) */
+        .timeline {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: none;
+            overflow: hidden;
+        }
+
+            /* The actual timeline (the vertical ruler) */
+            .timeline::after {
+                content: '';
+                position: absolute;
+                width: 6px;
+                background-color: #aaa;
+                top: 0;
+                bottom: 0;
+                left: 50%;
+                margin-left: -3px;
+            }
+
+        /* Container around content */
+        .container {
+            padding: 10px 40px;
+            position: relative;
+            background-color: inherit;
+            width: 50%;
+        }
+
+            /* The circles on the timeline */
+            .container::after {
+                content: '';
+                position: absolute;
+                width: 25px;
+                height: 25px;
+                right: -17px;
+                background-color: white;
+                border: 4px solid #aaa;
+                top: 15px;
+                border-radius: 50%;
+                z-index: 1;
+            }
+
+            .container.right::after {
+                background-color: #272b30;
+                background-image: url("https://wiki.guildwars2.com/images/4/46/Cross_red.png");
+                background-repeat: no-repeat;
+                background-position-x: 50%;
+                background-position-y: 75%;
+                background-size: 95%;
+                border: 4px solid #aaa;
+            }
+
+            .container.left::after {
+                background-color: #272b30;
+                background-image: url("https://wiki.guildwars2.com/images/5/52/Tick_green.png");
+                background-repeat: no-repeat;
+                background-position-x: 50%;
+                background-position-y: 75%;
+                background-size: 90%;
+                border: 4px solid #aaa;
+            }
+
+        /* Place the container to the left */
+        .left {
+            left: 0;
+        }
+
+        /* Place the container to the right */
+        .right {
+            left: 50%;
+            border-color: red;
+        }
+
+        /* Add arrows to the left container (pointing right) */
+        .left::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 22px;
+            width: 0;
+            z-index: 1;
+            right: 30px;
+            border: medium solid #444950;
+            border-width: 10px 0 10px 10px;
+            border-color: transparent transparent transparent #444950;
+        }
+
+        /* Add arrows to the right container (pointing left) */
+        .right::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 22px;
+            width: 0;
+            z-index: 1;
+            left: 30px;
+            border: medium solid #444950;
+            border-width: 10px 10px 10px 0;
+            border-color: transparent #444950 transparent transparent;
+        }
+
+        /* Fix the circle for containers on the right side */
+        .right::after {
+            left: -16px;
+        }
+
+        /* The actual content */
+		.content {
+			padding: 20px 30px;
+			background-color: #444950;
+			position: relative;
+			border-radius: 6px;
+		}
+
+		table {
+			font-family: Helvetica, sans-serif;
+			border-collapse: collapse;
+			width: 75%;
+			text-align: center;
+			margin-top: 10px;
+			position: relative;
+			left: 12%;
+			font-size: 14px;
+		}
+
+		td {
+			padding: 2px;
+		}
+
+		tr {
+			background-color: #31363c;
+		}
+
+			tr:nth-child(even) {
+				background-color: #3d444b;
+			}
+
+		
+		li a img {
+			position: relative;
+			top: 3px;
+			height: 16px;
+			width: 16px;
+			margin-right: 5px;
+		}
+
+
+		ul {
+			list-style-type: none;
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+			background-color: #333;
+			position: fixed;
+			top: 0;
+			width: 100%;
+            z-index: 10;
+		}
+
+		li {
+			float: left;
+		}
+
+		li a {
+			display: block;
+			color: #aaa;
+			text-align: center;
+			padding: 14px 16px;
+			text-decoration: none;
+		}
+
+		li a:hover:not(.active) {
+			background-color: #111;
+		}
+
+		li a.active {
+			background-color: #4CAF50;
+            color: white;
+            cursor: default;
+		}
+
+		.raids {
+			margin-top: 70px;
+		}
+
+        /* Media queries - Responsive timeline on screens less than 600px wide */
+        @media screen and (max-width: 600px) {
+            /* Place the timelime to the left */
+            .timeline::after {
+                left: 31px;
+            }
+
+            .box {
+                width: 100%;
+                left: 0%;
+            }
+
+            /* Full-width containers */
+            .container {
+                width: 100%;
+                padding-left: 70px;
+                padding-right: 25px;
+            }
+
+                /* Make sure that all arrows are pointing leftwards */
+                .container::before {
+                    left: 60px;
+                    border: medium solid white;
+                    border-width: 10px 10px 10px 0;
+                    border-color: transparent white transparent transparent;
+                }
+
+            /* Make sure all circles are at the same spot */
+            .left::after, .right::after {
+                left: 15px;
+            }
+
+            /* Make all right containers behave like the left ones */
+            .right {
+                left: 0%;
+            }
+
+			.raids {
+				margin-top: 120px;
+			}
+        }
+    </style>
+</head>
+<body>
+    <div class="menu">
+        <ul>
+            <li>
+                <a href="#" onclick="return false;" class="active">
+                    Raid Timeline
+                </a>
+            </li>
+            <li>
+                <a href="#" class="" onclick="showDps(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/6/67/Event_swords_%28map_icon%29.png">Show/Hide dps
+                </a>
+            </li>
+            <li>
+                <a href="#" class="" onclick="showAll(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/8/86/Raid_%28map_icon%29.png">Show/Hide all days
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="raids">
+        
+				<div class="header noselect">
+					<div class="box">
+						<div class="text">
+							<h2 style="text-align: center; margin-top: 15px; margin-bottom: 5px;">11/25/2020</h2>
+							<div style="padding: 5px;">
+								 <img src="https://wiki.guildwars2.com/images/2/20/Event_star_red_%28map_icon%29.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Total Raid time">
+									<b>Total:</b> 3h 42m 31s
+								 <img src="https://wiki.guildwars2.com/images/d/d4/Casino_Blitz_%28map_icon%29.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Fight time">
+									<b>Fight:</b> 1h 39m 20s
+							 </div>
+							<div style="padding: 5px;">
+								<img src="https://wiki.guildwars2.com/images/thumb/b/b0/Red_Boss.png/20px-Red_Boss.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of different bosses">
+									11
+								<img src="https://wiki.guildwars2.com/images/5/52/Tick_green.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of kills">
+									9
+								<img src="https://wiki.guildwars2.com/images/4/46/Cross_red.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of fails">
+									21
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="timeline">
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/U9Hz-20201125-201959_cairn" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b8_Mini_Cairn_the_Indomitable.png" alt="Cairn" width="64" height="64" style="float: right;">
+						<h2>Cairn</h2>
+						<p>8:17:10 PM &rArr; 8:20:00 PM (2m 50s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 3702273">22535 dps</td>
+						<td>18.80%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Prince.6053</td> 
+						<td title="Total Damage: 3392927">20652 dps</td>
+						<td>17.23%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 3170587">19298 dps</td>
+						<td>16.10%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/pUCd-20201125-202537_mo" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_c_c8_Mini_Mursaat_Overseer.png" alt="Mursaat Overseer" width="64" height="64" style="float: right;">
+						<h2>Mursaat Overseer</h2>
+						<p>8:23:44 PM &rArr; 8:25:38 PM (1m 54s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 3860576">34498 dps</td>
+						<td>17.88%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Prince.6053</td> 
+						<td title="Total Damage: 3397223">30357 dps</td>
+						<td>15.73%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ChrisTheKid.9652</td> 
+						<td title="Total Damage: 3174128">28363 dps</td>
+						<td>14.70%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/afnG-20201125-202857_sam" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f0_Mini_Samarog.png" alt="Samarog" width="64" height="64" style="float: right;">
+						<h2>Samarog</h2>
+						<p>8:27:54 PM &rArr; 8:28:58 PM (1m 4s)
+					</a>
+					
+					<div title="75.93% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 75.93%, 75.93%, green 24.069999999999993%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 1176337">18361 dps</td>
+						<td>16.81%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 975036">15219 dps</td>
+						<td>13.94%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Agrizan.1087</td> 
+						<td title="Total Damage: 961284">15004 dps</td>
+						<td>13.74%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/oCKz-20201125-203741_sam" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f0_Mini_Samarog.png" alt="Samarog" width="64" height="64" style="float: right;">
+						<h2>Samarog</h2>
+						<p>8:29:58 PM &rArr; 8:37:42 PM (7m 44s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 5841565">12919 dps</td>
+						<td>20.09%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 4906879">10852 dps</td>
+						<td>16.87%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Prince.6053</td> 
+						<td title="Total Damage: 4655860">10297 dps</td>
+						<td>16.01%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/DKJs-20201125-204834_dei" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e0_Mini_Ragged_White_Mantle_Figurehead.png" alt="Deimos" width="64" height="64" style="float: right;">
+						<h2>Deimos</h2>
+						<p>8:46:25 PM &rArr; 8:48:34 PM (2m 9s)
+					</a>
+					
+					<div title="50.39% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 50.39%, 50.39%, green 49.61%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 4015862">31511 dps</td>
+						<td>25.75%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 2727459">21401 dps</td>
+						<td>17.49%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 2499756">19615 dps</td>
+						<td>16.03%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/6G2Q-20201125-205714_dei" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e0_Mini_Ragged_White_Mantle_Figurehead.png" alt="Deimos" width="64" height="64" style="float: right;">
+						<h2>Deimos</h2>
+						<p>8:52:21 PM &rArr; 8:57:14 PM (4m 53s)
+					</a>
+					
+					<div title="23.21% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 23.21%, 23.21%, green 76.78999999999999%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 6269585">21554 dps</td>
+						<td>27.80%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 4960188">17052 dps</td>
+						<td>21.99%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 3084401">10603 dps</td>
+						<td>13.67%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/Svlt-20201125-210600_dei" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e0_Mini_Ragged_White_Mantle_Figurehead.png" alt="Deimos" width="64" height="64" style="float: right;">
+						<h2>Deimos</h2>
+						<p>9:00:06 PM &rArr; 9:06:00 PM (5m 54s)
+					</a>
+					
+					<div title="18.92% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 18.92%, 18.92%, green 81.08%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 6353160">18075 dps</td>
+						<td>27.43%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 4489866">12774 dps</td>
+						<td>19.39%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 4026367">11455 dps</td>
+						<td>17.38%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/i2dt-20201125-211424_dei" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e0_Mini_Ragged_White_Mantle_Figurehead.png" alt="Deimos" width="64" height="64" style="float: right;">
+						<h2>Deimos</h2>
+						<p>9:11:13 PM &rArr; 9:14:24 PM (3m 11s)
+					</a>
+					
+					<div title="43.13% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 43.13%, 43.13%, green 56.87%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 4323085">22887 dps</td>
+						<td>25.25%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 3234208">17122 dps</td>
+						<td>18.89%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 2863782">15161 dps</td>
+						<td>16.72%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/eUpU-20201125-211852_dei" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e0_Mini_Ragged_White_Mantle_Figurehead.png" alt="Deimos" width="64" height="64" style="float: right;">
+						<h2>Deimos</h2>
+						<p>9:16:32 PM &rArr; 9:18:53 PM (2m 21s)
+					</a>
+					
+					<div title="52.76% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 52.76%, 52.76%, green 47.24%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 3647239">25905 dps</td>
+						<td>25.03%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 2666586">18940 dps</td>
+						<td>18.30%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 2505384">17795 dps</td>
+						<td>17.19%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/qPX2-20201125-213650_vg" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_fb_Mini_Vale_Guardian.png" alt="Vale Guardian" width="64" height="64" style="float: right;">
+						<h2>Vale Guardian</h2>
+						<p>9:31:59 PM &rArr; 9:36:50 PM (4m 51s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 4049370">14009 dps</td>
+						<td>18.70%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 3578168">12379 dps</td>
+						<td>16.53%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Agrizan.1087</td> 
+						<td title="Total Damage: 3523908">12191 dps</td>
+						<td>16.28%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/yNK4-20201125-215321_gors" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_d_d1_Mini_Gorseval_the_Multifarious.png" alt="Gorseval the Multifarious" width="64" height="64" style="float: right;">
+						<h2>Gorseval the Multifarious</h2>
+						<p>9:49:13 PM &rArr; 9:53:20 PM (4m 7s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 4301459">17487 dps</td>
+						<td>20.19%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 3429271">13941 dps</td>
+						<td>16.09%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 2985273">12136 dps</td>
+						<td>14.01%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/d9ta-20201125-215929_sab" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_54_Mini_Sabetha.png" alt="Sabetha the Saboteur" width="64" height="64" style="float: right;">
+						<h2>Sabetha the Saboteur</h2>
+						<p>9:58:32 PM &rArr; 9:59:29 PM (0m 57s)
+					</a>
+					
+					<div title="78.21% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 78.21%, 78.21%, green 21.790000000000006%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 1270662">22306 dps</td>
+						<td>17.43%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>mayster.8340</td> 
+						<td title="Total Damage: 1171354">20563 dps</td>
+						<td>16.07%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Phazonic.7148</td> 
+						<td title="Total Damage: 920129">16152 dps</td>
+						<td>12.62%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/cyMS-20201125-220439_sab" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_54_Mini_Sabetha.png" alt="Sabetha the Saboteur" width="64" height="64" style="float: right;">
+						<h2>Sabetha the Saboteur</h2>
+						<p>10:00:36 PM &rArr; 10:04:39 PM (4m 3s)
+					</a>
+					
+					<div title="37.62% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 37.62%, 37.62%, green 62.38%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 3657589">15106 dps</td>
+						<td>17.54%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>mayster.8340</td> 
+						<td title="Total Damage: 3081027">12725 dps</td>
+						<td>14.78%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Phazonic.7148</td> 
+						<td title="Total Damage: 2949232">12181 dps</td>
+						<td>14.15%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/lbJS-20201125-221144_sab" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_54_Mini_Sabetha.png" alt="Sabetha the Saboteur" width="64" height="64" style="float: right;">
+						<h2>Sabetha the Saboteur</h2>
+						<p>10:05:35 PM &rArr; 10:11:44 PM (6m 9s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 5996187">16408 dps</td>
+						<td>17.98%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Phazonic.7148</td> 
+						<td title="Total Damage: 4669463">12778 dps</td>
+						<td>14.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 4523693">12379 dps</td>
+						<td>13.56%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/1P9C-20201125-222007_kc" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ea_Mini_Keep_Construct.png" alt="Keep Construct" width="64" height="64" style="float: right;">
+						<h2>Keep Construct</h2>
+						<p>10:19:09 PM &rArr; 10:20:07 PM (0m 58s)
+					</a>
+					
+					<div title="83.76% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 83.76%, 83.76%, green 16.239999999999995%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>mayster.8340</td> 
+						<td title="Total Damage: 1690030">29180 dps</td>
+						<td>19.02%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisGuyisGood.4861</td> 
+						<td title="Total Damage: 1578402">27253 dps</td>
+						<td>17.77%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 1428441">24664 dps</td>
+						<td>16.08%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/fcxD-20201125-222546_kc" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ea_Mini_Keep_Construct.png" alt="Keep Construct" width="64" height="64" style="float: right;">
+						<h2>Keep Construct</h2>
+						<p>10:21:19 PM &rArr; 10:25:46 PM (4m 27s)
+					</a>
+					
+					<div title="55.76% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 55.76%, 55.76%, green 44.24%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>ThisGuyisGood.4861</td> 
+						<td title="Total Damage: 4791430">17967 dps</td>
+						<td>19.82%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>mayster.8340</td> 
+						<td title="Total Damage: 3989989">14961 dps</td>
+						<td>16.50%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 3633620">13625 dps</td>
+						<td>15.03%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/AJWN-20201125-222627_kc" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ea_Mini_Keep_Construct.png" alt="Keep Construct" width="64" height="64" style="float: right;">
+						<h2>Keep Construct</h2>
+						<p>10:26:18 PM &rArr; 10:26:27 PM (0m 9s)
+					</a>
+					
+					<div title="99.97% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 99.97%, 99.97%, green 0.030000000000001137%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>mayster.8340</td> 
+						<td title="Total Damage: 13681">1544 dps</td>
+						<td>84.93%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisGuyisGood.4861</td> 
+						<td title="Total Damage: 2427">273 dps</td>
+						<td>15.07%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/AUHB-20201125-222807_kc" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ea_Mini_Keep_Construct.png" alt="Keep Construct" width="64" height="64" style="float: right;">
+						<h2>Keep Construct</h2>
+						<p>10:27:09 PM &rArr; 10:28:07 PM (0m 58s)
+					</a>
+					
+					<div title="83.54% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 83.54%, 83.54%, green 16.459999999999994%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>mayster.8340</td> 
+						<td title="Total Damage: 1448058">24961 dps</td>
+						<td>16.12%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisGuyisGood.4861</td> 
+						<td title="Total Damage: 1429773">24646 dps</td>
+						<td>15.92%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 1207253">20810 dps</td>
+						<td>13.44%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/gfiU-20201125-223313_kc" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ea_Mini_Keep_Construct.png" alt="Keep Construct" width="64" height="64" style="float: right;">
+						<h2>Keep Construct</h2>
+						<p>10:29:00 PM &rArr; 10:33:13 PM (4m 13s)
+					</a>
+					
+					<div title="55.07% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 55.07%, 55.07%, green 44.93%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>ThisGuyisGood.4861</td> 
+						<td title="Total Damage: 4492477">17762 dps</td>
+						<td>18.26%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>mayster.8340</td> 
+						<td title="Total Damage: 3937337">15567 dps</td>
+						<td>16.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 3265053">12909 dps</td>
+						<td>13.27%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/CLIp-20201125-223909_kc" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ea_Mini_Keep_Construct.png" alt="Keep Construct" width="64" height="64" style="float: right;">
+						<h2>Keep Construct</h2>
+						<p>10:34:06 PM &rArr; 10:39:10 PM (5m 4s)
+					</a>
+					
+					<div title="38.42% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 38.42%, 38.42%, green 61.58%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>ThisGuyisGood.4861</td> 
+						<td title="Total Damage: 6756097">22273 dps</td>
+						<td>20.02%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>mayster.8340</td> 
+						<td title="Total Damage: 6524528">21510 dps</td>
+						<td>19.34%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 4536007">14954 dps</td>
+						<td>13.44%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/jLj2-20201125-224809_kc" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ea_Mini_Keep_Construct.png" alt="Keep Construct" width="64" height="64" style="float: right;">
+						<h2>Keep Construct</h2>
+						<p>10:39:55 PM &rArr; 10:48:09 PM (8m 14s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>ThisGuyisGood.4861</td> 
+						<td title="Total Damage: 9988961">20419 dps</td>
+						<td>18.23%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>mayster.8340</td> 
+						<td title="Total Damage: 8731208">17848 dps</td>
+						<td>15.93%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 7040011">14390 dps</td>
+						<td>12.85%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/C82J-20201125-225354_tc" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/xpQnu35.png" alt="Twisted Castle" width="64" height="64" style="float: right;">
+						<h2>Twisted Castle</h2>
+						<p>10:50:21 PM &rArr; 10:53:54 PM (3m 33s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>DrQuackinDux.1475</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Agrizan.1087</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Tjin Eighty Nine.8691</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/tpIF-20201125-230900_xera" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4b_Mini_Xera.png" alt="Xera" width="64" height="64" style="float: right;">
+						<h2>Xera</h2>
+						<p>11:03:24 PM &rArr; 11:09:00 PM (5m 36s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 5186587">16057 dps</td>
+						<td>21.87%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Tosh.2346</td> 
+						<td title="Total Damage: 4386823">13581 dps</td>
+						<td>18.49%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 3616631">11197 dps</td>
+						<td>15.25%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/jkyz-20201125-232744_sloth" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ed_Mini_Slubling.png" alt="Slothasor" width="64" height="64" style="float: right;">
+						<h2>Slothasor</h2>
+						<p>11:26:18 PM &rArr; 11:27:44 PM (1m 26s)
+					</a>
+					
+					<div title="70.59% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 70.59%, 70.59%, green 29.409999999999997%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>WeltyPiano.6859</td> 
+						<td title="Total Damage: 1477418">17171 dps</td>
+						<td>26.62%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 1001910">11644 dps</td>
+						<td>18.06%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Prince.6053</td> 
+						<td title="Total Damage: 783796">9109 dps</td>
+						<td>14.12%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/w4B8-20201125-233102_sloth" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ed_Mini_Slubling.png" alt="Slothasor" width="64" height="64" style="float: right;">
+						<h2>Slothasor</h2>
+						<p>11:28:48 PM &rArr; 11:31:01 PM (2m 13s)
+					</a>
+					
+					<div title="43.22% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 43.22%, 43.22%, green 56.78%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>WeltyPiano.6859</td> 
+						<td title="Total Damage: 2457870">18460 dps</td>
+						<td>22.94%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 1598391">12005 dps</td>
+						<td>14.92%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Prince.6053</td> 
+						<td title="Total Damage: 1581390">11877 dps</td>
+						<td>14.76%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/7b91-20201125-233409_sloth" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ed_Mini_Slubling.png" alt="Slothasor" width="64" height="64" style="float: right;">
+						<h2>Slothasor</h2>
+						<p>11:32:26 PM &rArr; 11:34:08 PM (1m 42s)
+					</a>
+					
+					<div title="59.94% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 59.94%, 59.94%, green 40.06%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>WeltyPiano.6859</td> 
+						<td title="Total Damage: 1850152">18023 dps</td>
+						<td>24.51%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Prince.6053</td> 
+						<td title="Total Damage: 1231397">11996 dps</td>
+						<td>16.32%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 1152480">11227 dps</td>
+						<td>15.27%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/i5sE-20201125-233816_sloth" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ed_Mini_Slubling.png" alt="Slothasor" width="64" height="64" style="float: right;">
+						<h2>Slothasor</h2>
+						<p>11:35:17 PM &rArr; 11:38:15 PM (2m 58s)
+					</a>
+					
+					<div title="31.33% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 31.33%, 31.33%, green 68.67%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>WeltyPiano.6859</td> 
+						<td title="Total Damage: 3127266">17570 dps</td>
+						<td>24.19%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 2422707">13612 dps</td>
+						<td>18.74%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Prince.6053</td> 
+						<td title="Total Damage: 2026319">11385 dps</td>
+						<td>15.67%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/zAZM-20201125-234306_sloth" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ed_Mini_Slubling.png" alt="Slothasor" width="64" height="64" style="float: right;">
+						<h2>Slothasor</h2>
+						<p>11:40:06 PM &rArr; 11:43:05 PM (2m 59s)
+					</a>
+					
+					<div title="42.97% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 42.97%, 42.97%, green 57.03%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>WeltyPiano.6859</td> 
+						<td title="Total Damage: 2415585">13489 dps</td>
+						<td>22.37%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 2335732">13043 dps</td>
+						<td>21.63%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Prince.6053</td> 
+						<td title="Total Damage: 1448109">8086 dps</td>
+						<td>13.41%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/t4Gb-20201125-235630_sloth" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ed_Mini_Slubling.png" alt="Slothasor" width="64" height="64" style="float: right;">
+						<h2>Slothasor</h2>
+						<p>11:55:46 PM &rArr; 11:56:29 PM (0m 43s)
+					</a>
+					
+					<div title="84.17% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 84.17%, 84.17%, green 15.829999999999998%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>DivineSlayer.5039</td> 
+						<td title="Total Damage: 725302">16900 dps</td>
+						<td>24.43%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 647086">15077 dps</td>
+						<td>21.79%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Liliaceae.8016</td> 
+						<td title="Total Damage: 516645">12038 dps</td>
+						<td>17.40%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/rNnG-20201125-235942_sloth" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ed_Mini_Slubling.png" alt="Slothasor" width="64" height="64" style="float: right;">
+						<h2>Slothasor</h2>
+						<p>11:57:41 PM &rArr; 11:59:41 PM (2m 0s)
+					</a>
+					
+					<div title="46.97% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 46.97%, 46.97%, green 53.03%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>DivineSlayer.5039</td> 
+						<td title="Total Damage: 2182988">18164 dps</td>
+						<td>21.70%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 2086315">17359 dps</td>
+						<td>20.74%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Liliaceae.8016</td> 
+						<td title="Total Damage: 1675551">13941 dps</td>
+						<td>16.65%</td>
+					</tr></table>
+				</div>
+			</div>
+			</div>
+				<div class="header noselect">
+					<div class="box">
+						<div class="text">
+							<h2 style="text-align: center; margin-top: 15px; margin-bottom: 5px;">11/26/2020</h2>
+							<div style="padding: 5px;">
+								 <img src="https://wiki.guildwars2.com/images/2/20/Event_star_red_%28map_icon%29.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Total Raid time">
+									<b>Total:</b> 0h 0m 30s
+								 <img src="https://wiki.guildwars2.com/images/d/d4/Casino_Blitz_%28map_icon%29.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Fight time">
+									<b>Fight:</b> 0h 0m 30s
+							 </div>
+							<div style="padding: 5px;">
+								<img src="https://wiki.guildwars2.com/images/thumb/b/b0/Red_Boss.png/20px-Red_Boss.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of different bosses">
+									1
+								<img src="https://wiki.guildwars2.com/images/5/52/Tick_green.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of kills">
+									0
+								<img src="https://wiki.guildwars2.com/images/4/46/Cross_red.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of fails">
+									1
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="timeline">
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/MeUm-20201126-000120_sloth" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ed_Mini_Slubling.png" alt="Slothasor" width="64" height="64" style="float: right;">
+						<h2>Slothasor</h2>
+						<p>12:00:49 AM &rArr; 12:01:19 AM (0m 30s)
+					</a>
+					
+					<div title="86.87% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 86.87%, 86.87%, green 13.129999999999995%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Velvet.8645</td> 
+						<td title="Total Damage: 501257">16772 dps</td>
+						<td>20.40%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Liliaceae.8016</td> 
+						<td title="Total Damage: 479095">16030 dps</td>
+						<td>19.50%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 396821">13277 dps</td>
+						<td>16.15%</td>
+					</tr></table>
+				</div>
+			</div>
+			</div>
+    </div>
+
+    <script>
+		var coll = document.getElementsByClassName("box");
+		var i;
+
+		for (i = 0; i < coll.length; i++) {
+			coll[i].addEventListener("click", function() {
+			this.classList.toggle("active");
+			var content = this.parentElement.nextElementSibling;
+			if (content.style.display === "block") {
+				content.style.display = "none";
+			} else {
+				content.style.display = "block";
+			}
+			});
+        }
+
+        function showAll() {
+			var days = document.getElementsByClassName("box");
+            var i;
+			var init = days[0].parentElement.nextElementSibling.style.display;
+
+            for (i = 0; i < days.length; i++) {
+				var content = days[i].parentElement.nextElementSibling;
+				if (init === "block") {
+					content.style.display = "none";
+				} else {
+					content.style.display = "block";
+				}
+			}
+        }
+
+		function showDps() {
+            var dpsTables = document.getElementsByClassName("dpsTable");
+			var i;
+
+			for (i = 0; i < dpsTables.length; i++) {
+				if (dpsTables[i].style.display === "none") {
+					dpsTables[i].style.display = "table";
+                } else {
+					dpsTables[i].style.display = "none";
+                }
+            }
+  		} 
+    </script>
+</body>
+</html>
