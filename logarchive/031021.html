@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Raid Timeline</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #272b30;
+            font-family: Helvetica, sans-serif;
+            overflow-y: scroll;
+        }
+
+        /* Header stuff */
+        .header {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .noselect {
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Old versions of Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
+        }
+
+        .box {
+            margin-top: 20px;
+            margin-bottom: 0px;
+            padding: 0px;
+            position: relative;
+            left: 25%;
+            border-style: solid;
+            border-width: 5px;
+            border-color: #aaa;
+            width: 50%;
+            border-radius: 6px;
+            background-color: #444950;
+            cursor: pointer;
+        }
+
+            .box:hover {
+                background-color: #555;
+            }
+
+        .text {
+            color: #aaa;
+            text-align: center;
+            padding-bottom: 10px;
+        }
+
+
+        /* The actual timeline (the vertical ruler) */
+        .timeline {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: none;
+            overflow: hidden;
+        }
+
+            /* The actual timeline (the vertical ruler) */
+            .timeline::after {
+                content: '';
+                position: absolute;
+                width: 6px;
+                background-color: #aaa;
+                top: 0;
+                bottom: 0;
+                left: 50%;
+                margin-left: -3px;
+            }
+
+        /* Container around content */
+        .container {
+            padding: 10px 40px;
+            position: relative;
+            background-color: inherit;
+            width: 50%;
+        }
+
+            /* The circles on the timeline */
+            .container::after {
+                content: '';
+                position: absolute;
+                width: 25px;
+                height: 25px;
+                right: -17px;
+                background-color: white;
+                border: 4px solid #aaa;
+                top: 15px;
+                border-radius: 50%;
+                z-index: 1;
+            }
+
+            .container.right::after {
+                background-color: #272b30;
+                background-image: url("https://wiki.guildwars2.com/images/4/46/Cross_red.png");
+                background-repeat: no-repeat;
+                background-position-x: 50%;
+                background-position-y: 75%;
+                background-size: 95%;
+                border: 4px solid #aaa;
+            }
+
+            .container.left::after {
+                background-color: #272b30;
+                background-image: url("https://wiki.guildwars2.com/images/5/52/Tick_green.png");
+                background-repeat: no-repeat;
+                background-position-x: 50%;
+                background-position-y: 75%;
+                background-size: 90%;
+                border: 4px solid #aaa;
+            }
+
+        /* Place the container to the left */
+        .left {
+            left: 0;
+        }
+
+        /* Place the container to the right */
+        .right {
+            left: 50%;
+            border-color: red;
+        }
+
+        /* Add arrows to the left container (pointing right) */
+        .left::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 22px;
+            width: 0;
+            z-index: 1;
+            right: 30px;
+            border: medium solid #444950;
+            border-width: 10px 0 10px 10px;
+            border-color: transparent transparent transparent #444950;
+        }
+
+        /* Add arrows to the right container (pointing left) */
+        .right::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 22px;
+            width: 0;
+            z-index: 1;
+            left: 30px;
+            border: medium solid #444950;
+            border-width: 10px 10px 10px 0;
+            border-color: transparent #444950 transparent transparent;
+        }
+
+        /* Fix the circle for containers on the right side */
+        .right::after {
+            left: -16px;
+        }
+
+        /* The actual content */
+		.content {
+			padding: 20px 30px;
+			background-color: #444950;
+			position: relative;
+			border-radius: 6px;
+		}
+
+		table {
+			font-family: Helvetica, sans-serif;
+			border-collapse: collapse;
+			width: 75%;
+			text-align: center;
+			margin-top: 10px;
+			position: relative;
+			left: 12%;
+			font-size: 14px;
+		}
+
+		td {
+			padding: 2px;
+		}
+
+		tr {
+			background-color: #31363c;
+		}
+
+			tr:nth-child(even) {
+				background-color: #3d444b;
+			}
+
+		
+		li a img {
+			position: relative;
+			top: 3px;
+			height: 16px;
+			width: 16px;
+			margin-right: 5px;
+		}
+
+
+		ul {
+			list-style-type: none;
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+			background-color: #333;
+			position: fixed;
+			top: 0;
+			width: 100%;
+            z-index: 10;
+		}
+
+		li {
+			float: left;
+		}
+
+		li a {
+			display: block;
+			color: #aaa;
+			text-align: center;
+			padding: 14px 16px;
+			text-decoration: none;
+		}
+
+		li a:hover:not(.active) {
+			background-color: #111;
+		}
+
+		li a.active {
+			background-color: #4CAF50;
+            color: white;
+            cursor: default;
+		}
+
+		.raids {
+			margin-top: 70px;
+		}
+
+        /* Media queries - Responsive timeline on screens less than 600px wide */
+        @media screen and (max-width: 600px) {
+            /* Place the timelime to the left */
+            .timeline::after {
+                left: 31px;
+            }
+
+            .box {
+                width: 100%;
+                left: 0%;
+            }
+
+            /* Full-width containers */
+            .container {
+                width: 100%;
+                padding-left: 70px;
+                padding-right: 25px;
+            }
+
+                /* Make sure that all arrows are pointing leftwards */
+                .container::before {
+                    left: 60px;
+                    border: medium solid white;
+                    border-width: 10px 10px 10px 0;
+                    border-color: transparent white transparent transparent;
+                }
+
+            /* Make sure all circles are at the same spot */
+            .left::after, .right::after {
+                left: 15px;
+            }
+
+            /* Make all right containers behave like the left ones */
+            .right {
+                left: 0%;
+            }
+
+			.raids {
+				margin-top: 120px;
+			}
+        }
+    </style>
+</head>
+<body>
+    <div class="menu">
+        <ul>
+            <li>
+                <a href="#" onclick="return false;" class="active">
+                    Raid Timeline
+                </a>
+            </li>
+            <li>
+                <a href="#" class="" onclick="showDps(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/6/67/Event_swords_%28map_icon%29.png">Show/Hide dps
+                </a>
+            </li>
+            <li>
+                <a href="#" class="" onclick="showAll(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/8/86/Raid_%28map_icon%29.png">Show/Hide all days
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="raids">
+        
+				<div class="header noselect">
+					<div class="box">
+						<div class="text">
+							<h2 style="text-align: center; margin-top: 15px; margin-bottom: 5px;">3/10/2021</h2>
+							<div style="padding: 5px;">
+								 <img src="https://wiki.guildwars2.com/images/2/20/Event_star_red_%28map_icon%29.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Total Raid time">
+									<b>Total:</b> 3h 32m 17s
+								 <img src="https://wiki.guildwars2.com/images/d/d4/Casino_Blitz_%28map_icon%29.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Fight time">
+									<b>Fight:</b> 1h 59m 53s
+							 </div>
+							<div style="padding: 5px;">
+								<img src="https://wiki.guildwars2.com/images/thumb/b/b0/Red_Boss.png/20px-Red_Boss.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of different bosses">
+									5
+								<img src="https://wiki.guildwars2.com/images/5/52/Tick_green.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of kills">
+									3
+								<img src="https://wiki.guildwars2.com/images/4/46/Cross_red.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of fails">
+									29
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="timeline">
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/JsT2-20210310-203219_sabir" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_fc_Mini_Air_Djinn.png" alt="Cardinal Sabir" width="64" height="64" style="float: right;">
+						<h2>Cardinal Sabir</h2>
+						<p>8:26:41 PM &rArr; 8:32:18 PM (5m 37s)
+					</a>
+					
+					<div title="25.59% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 25.59%, 25.59%, green 74.41%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 3699344">10993 dps</td>
+						<td>16.83%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 3312715">9844 dps</td>
+						<td>15.07%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Ms asian.2451</td> 
+						<td title="Total Damage: 3151921">9366 dps</td>
+						<td>14.34%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/yNx2-20210310-203732_sabir" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_fc_Mini_Air_Djinn.png" alt="Cardinal Sabir" width="64" height="64" style="float: right;">
+						<h2>Cardinal Sabir</h2>
+						<p>8:33:33 PM &rArr; 8:37:31 PM (3m 58s)
+					</a>
+					
+					<div title="36.19% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 36.19%, 36.19%, green 63.81%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 3140715">13188 dps</td>
+						<td>16.63%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Ms asian.2451</td> 
+						<td title="Total Damage: 2797909">11748 dps</td>
+						<td>14.82%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 2752035">11556 dps</td>
+						<td>14.57%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/w78b-20210310-204431_sabir" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_fc_Mini_Air_Djinn.png" alt="Cardinal Sabir" width="64" height="64" style="float: right;">
+						<h2>Cardinal Sabir</h2>
+						<p>8:38:23 PM &rArr; 8:44:30 PM (6m 7s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 5020315">13794 dps</td>
+						<td>17.01%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 4716061">12958 dps</td>
+						<td>15.98%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 4376607">12025 dps</td>
+						<td>14.83%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/Sygu-20210310-205406_adina" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_a0_Mini_Earth_Djinn.png" alt="Cardinal Adina" width="64" height="64" style="float: right;">
+						<h2>Cardinal Adina</h2>
+						<p>8:53:40 PM &rArr; 8:54:05 PM (0m 25s)
+					</a>
+					
+					<div title="88.45% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 88.45%, 88.45%, green 11.549999999999997%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 467972">18735 dps</td>
+						<td>17.90%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 434457">17393 dps</td>
+						<td>16.62%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>mvbc.7250</td> 
+						<td title="Total Damage: 418460">16753 dps</td>
+						<td>16.01%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/HJni-20210310-205435_adina" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_a0_Mini_Earth_Djinn.png" alt="Cardinal Adina" width="64" height="64" style="float: right;">
+						<h2>Cardinal Adina</h2>
+						<p>8:54:25 PM &rArr; 8:54:34 PM (0m 9s)
+					</a>
+					
+					<div title="99.99% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 99.99%, 99.99%, green 0.010000000000005116%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>corporaldonut.1475</td> 
+						<td title="Total Damage: 476">56 dps</td>
+						<td>53.79%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 409">48 dps</td>
+						<td>46.21%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/Hi9j-20210310-210112_adina" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_a0_Mini_Earth_Djinn.png" alt="Cardinal Adina" width="64" height="64" style="float: right;">
+						<h2>Cardinal Adina</h2>
+						<p>8:56:15 PM &rArr; 9:01:10 PM (4m 55s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Danny.8071</td> 
+						<td title="Total Damage: 3799985">13111 dps</td>
+						<td>16.83%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>mvbc.7250</td> 
+						<td title="Total Damage: 3594231">12401 dps</td>
+						<td>15.92%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 3064840">10575 dps</td>
+						<td>13.58%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/HcYy-20210310-211332_ca" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/eLyIWd2.png" alt="Conjured Amalgamate" width="64" height="64" style="float: right;">
+						<h2>Conjured Amalgamate</h2>
+						<p>9:09:19 PM &rArr; 9:13:31 PM (4m 12s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Conjured Sword</td> 
+						<td title="Total Damage: 6054056">24519 dps</td>
+						<td>16.55%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 5841580">23658 dps</td>
+						<td>15.97%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>VirtualCare.7415</td> 
+						<td title="Total Damage: 5567098">22546 dps</td>
+						<td>15.22%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/v7JN-20210310-212721_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>9:23:54 PM &rArr; 9:27:20 PM (3m 26s)
+					</a>
+					
+					<div title="43.02% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 43.02%, 43.02%, green 56.98%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>VirtualCare.7415</td> 
+						<td title="Total Damage: 5385004">26170 dps</td>
+						<td>20.05%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 4927149">23945 dps</td>
+						<td>18.35%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 4717342">22925 dps</td>
+						<td>17.56%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/vrgg-20210310-213651_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>9:28:48 PM &rArr; 9:36:50 PM (8m 2s)
+					</a>
+					
+					<div title="4.36% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 4.36%, 4.36%, green 95.64%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>VirtualCare.7415</td> 
+						<td title="Total Damage: 8937623">18567 dps</td>
+						<td>19.87%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 7560631">15707 dps</td>
+						<td>16.81%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Animalmorph.6135</td> 
+						<td title="Total Damage: 6343850">13179 dps</td>
+						<td>14.10%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/FqcX-20210310-214224_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>9:41:07 PM &rArr; 9:42:22 PM (1m 15s)
+					</a>
+					
+					<div title="82% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 82%, 82%, green 18%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 1907140">25372 dps</td>
+						<td>19.03%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 1602312">21316 dps</td>
+						<td>15.99%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Animalmorph.6135</td> 
+						<td title="Total Damage: 1464091">19478 dps</td>
+						<td>14.61%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/NocD-20210310-214559_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>9:43:30 PM &rArr; 9:45:57 PM (2m 27s)
+					</a>
+					
+					<div title="58.33% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 58.33%, 58.33%, green 41.67%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 3880985">26418 dps</td>
+						<td>19.79%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 2881804">19616 dps</td>
+						<td>14.70%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Animalmorph.6135</td> 
+						<td title="Total Damage: 2776428">18899 dps</td>
+						<td>14.16%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/ULyy-20210310-215044_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>9:47:43 PM &rArr; 9:50:43 PM (3m 0s)
+					</a>
+					
+					<div title="53.55% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 53.55%, 53.55%, green 46.45%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 4117610">22928 dps</td>
+						<td>18.81%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 3802323">21172 dps</td>
+						<td>17.37%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 3128602">17420 dps</td>
+						<td>14.29%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/XHO0-20210310-220147_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>9:54:36 PM &rArr; 10:01:46 PM (7m 10s)
+					</a>
+					
+					<div title="18.44% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 18.44%, 18.44%, green 81.56%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 7816530">18195 dps</td>
+						<td>20.35%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>superflamer.7259</td> 
+						<td title="Total Damage: 7268331">16919 dps</td>
+						<td>18.93%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Animalmorph.6135</td> 
+						<td title="Total Damage: 5020676">11687 dps</td>
+						<td>13.07%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/kgxK-20210310-220412_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>10:02:52 PM &rArr; 10:04:10 PM (1m 18s)
+					</a>
+					
+					<div title="78.26% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 78.26%, 78.26%, green 21.739999999999995%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 1976215">25147 dps</td>
+						<td>19.29%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 1712190">21788 dps</td>
+						<td>16.71%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 1445667">18396 dps</td>
+						<td>14.11%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/yaNe-20210310-221539_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>10:09:07 PM &rArr; 10:15:37 PM (6m 30s)
+					</a>
+					
+					<div title="17.28% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 17.28%, 17.28%, green 82.72%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 6583022">16864 dps</td>
+						<td>16.91%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>superflamer.7259</td> 
+						<td title="Total Damage: 6099864">15626 dps</td>
+						<td>15.67%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 6090911">15603 dps</td>
+						<td>15.64%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/gbNn-20210310-221920_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>10:16:55 PM &rArr; 10:19:19 PM (2m 24s)
+					</a>
+					
+					<div title="61.33% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 61.33%, 61.33%, green 38.67%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 3032505">21144 dps</td>
+						<td>16.66%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Animalmorph.6135</td> 
+						<td title="Total Damage: 2957840">20623 dps</td>
+						<td>16.25%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 2849133">19865 dps</td>
+						<td>15.66%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/W70U-20210310-222743_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>10:20:41 PM &rArr; 10:27:42 PM (7m 1s)
+					</a>
+					
+					<div title="11.19% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 11.19%, 11.19%, green 88.81%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 7495000">17807 dps</td>
+						<td>17.92%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 7154388">16998 dps</td>
+						<td>17.11%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>superflamer.7259</td> 
+						<td title="Total Damage: 6779579">16108 dps</td>
+						<td>16.21%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/OI2G-20210310-223114_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>10:28:52 PM &rArr; 10:31:13 PM (2m 21s)
+					</a>
+					
+					<div title="65.58% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 65.58%, 65.58%, green 34.42%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 2807195">19907 dps</td>
+						<td>17.35%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 2665778">18904 dps</td>
+						<td>16.48%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>superflamer.7259</td> 
+						<td title="Total Damage: 2641460">18732 dps</td>
+						<td>16.33%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/IDta-20210310-223340_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>10:32:12 PM &rArr; 10:33:38 PM (1m 26s)
+					</a>
+					
+					<div title="78.18% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 78.18%, 78.18%, green 21.819999999999993%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 1971599">22718 dps</td>
+						<td>19.19%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 1809552">20850 dps</td>
+						<td>17.61%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>superflamer.7259</td> 
+						<td title="Total Damage: 1553124">17896 dps</td>
+						<td>15.12%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/xnGP-20210310-223714_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>10:34:44 PM &rArr; 10:37:12 PM (2m 28s)
+					</a>
+					
+					<div title="58.67% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 58.67%, 58.67%, green 41.33%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 3461792">23442 dps</td>
+						<td>17.79%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 3158550">21388 dps</td>
+						<td>16.23%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>superflamer.7259</td> 
+						<td title="Total Damage: 2793832">18918 dps</td>
+						<td>14.36%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/4Bum-20210310-224511_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>10:38:41 PM &rArr; 10:45:10 PM (6m 29s)
+					</a>
+					
+					<div title="16.66% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 16.66%, 16.66%, green 83.34%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 7514144">19341 dps</td>
+						<td>19.17%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 6661964">17147 dps</td>
+						<td>16.99%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>superflamer.7259</td> 
+						<td title="Total Damage: 6070315">15624 dps</td>
+						<td>15.48%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/Hz5z-20210310-225339_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>10:46:22 PM &rArr; 10:53:37 PM (7m 15s)
+					</a>
+					
+					<div title="17.11% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 17.11%, 17.11%, green 82.89%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 8251400">18944 dps</td>
+						<td>21.10%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 7733537">17755 dps</td>
+						<td>19.78%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Animalmorph.6135</td> 
+						<td title="Total Damage: 5279381">12121 dps</td>
+						<td>13.50%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/a7Eo-20210310-225728_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>10:54:50 PM &rArr; 10:57:27 PM (2m 37s)
+					</a>
+					
+					<div title="59.09% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 59.09%, 59.09%, green 40.91%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 3750130">23908 dps</td>
+						<td>19.49%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 3072048">19585 dps</td>
+						<td>15.97%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 2944696">18773 dps</td>
+						<td>15.30%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/zSGT-20210310-231801_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>11:13:55 PM &rArr; 11:18:00 PM (4m 5s)
+					</a>
+					
+					<div title="48.78% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 48.78%, 48.78%, green 51.22%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="36.93% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 36.93%, 36.93%, green 63.07%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 2012278">8226 dps</td>
+						<td>23.35%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Avoider.4291</td> 
+						<td title="Total Damage: 1653627">6759 dps</td>
+						<td>19.18%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 1452268">5936 dps</td>
+						<td>16.85%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/vYXw-20210310-232302_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>11:19:12 PM &rArr; 11:23:01 PM (3m 49s)
+					</a>
+					
+					<div title="39.32% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 39.32%, 39.32%, green 60.68%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="27.6% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 27.6%, 27.6%, green 72.4%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Avoider.4291</td> 
+						<td title="Total Damage: 2562748">11187 dps</td>
+						<td>25.13%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 2036963">8891 dps</td>
+						<td>19.97%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 1619278">7068 dps</td>
+						<td>15.88%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/TlW8-20210310-232512_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>11:24:05 PM &rArr; 11:25:11 PM (1m 6s)
+					</a>
+					
+					<div title="56.43% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 56.43%, 56.43%, green 43.57%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Avoider.4291</td> 
+						<td title="Total Damage: 2011454">30531 dps</td>
+						<td>27.21%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 1419231">21542 dps</td>
+						<td>19.20%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 1325327">20116 dps</td>
+						<td>17.93%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/dV4u-20210310-233029_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>11:25:50 PM &rArr; 11:30:28 PM (4m 38s)
+					</a>
+					
+					<div title="26.71% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 26.71%, 26.71%, green 73.28999999999999%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="21.91% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 21.91%, 21.91%, green 78.09%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Avoider.4291</td> 
+						<td title="Total Damage: 3931994">14174 dps</td>
+						<td>32.32%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 2816978">10154 dps</td>
+						<td>23.15%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 1783065">6427 dps</td>
+						<td>14.66%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/lcfC-20210310-233632_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>11:31:59 PM &rArr; 11:36:31 PM (4m 32s)
+					</a>
+					
+					<div title="100% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 100%, 100%, green 0%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="100% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 100%, 100%, green 0%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Avoider.4291</td> 
+						<td title="Total Damage: 3581192">13196 dps</td>
+						<td>32.36%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 2251476">8296 dps</td>
+						<td>20.35%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 1779130">6556 dps</td>
+						<td>16.08%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/S8l4-20210310-234307_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>11:42:23 PM &rArr; 11:43:06 PM (0m 43s)
+					</a>
+					
+					<div title="80% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 80%, 80%, green 20%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Graph.7650</td> 
+						<td title="Total Damage: 692045">16133 dps</td>
+						<td>20.13%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 645387">15045 dps</td>
+						<td>18.78%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 637077">14852 dps</td>
+						<td>18.54%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/8kmT-20210310-234521_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>11:43:53 PM &rArr; 11:45:20 PM (1m 27s)
+					</a>
+					
+					<div title="51.5% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 51.5%, 51.5%, green 48.5%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Graph.7650</td> 
+						<td title="Total Damage: 1608983">18537 dps</td>
+						<td>19.52%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 1506190">17353 dps</td>
+						<td>18.27%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 1476796">17014 dps</td>
+						<td>17.91%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/qiuE-20210310-235023_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>11:45:56 PM &rArr; 11:50:22 PM (4m 26s)
+					</a>
+					
+					<div title="24.94% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 24.94%, 24.94%, green 75.06%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="29.42% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 29.42%, 29.42%, green 70.58%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 3101000">11670 dps</td>
+						<td>25.09%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 2427089">9134 dps</td>
+						<td>19.63%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Graph.7650</td> 
+						<td title="Total Damage: 2093837">7880 dps</td>
+						<td>16.94%</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/em1i-20210310-235859_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>11:54:23 PM &rArr; 11:58:58 PM (4m 35s)
+					</a>
+					
+					<div title="24.99% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 24.99%, 24.99%, green 75.01%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="25.98% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 25.98%, 25.98%, green 74.02%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Emdose.1093</td> 
+						<td title="Total Damage: 2786868">10151 dps</td>
+						<td>22.43%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>TwinkleToes.2849</td> 
+						<td title="Total Damage: 2571472">9367 dps</td>
+						<td>20.69%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>superflamer.7259</td> 
+						<td title="Total Damage: 2223759">8100 dps</td>
+						<td>17.90%</td>
+					</tr></table>
+				</div>
+			</div>
+			</div>
+    </div>
+
+    <script>
+		var coll = document.getElementsByClassName("box");
+		var i;
+
+		for (i = 0; i < coll.length; i++) {
+			coll[i].addEventListener("click", function() {
+			this.classList.toggle("active");
+			var content = this.parentElement.nextElementSibling;
+			if (content.style.display === "block") {
+				content.style.display = "none";
+			} else {
+				content.style.display = "block";
+			}
+			});
+        }
+
+        function showAll() {
+			var days = document.getElementsByClassName("box");
+            var i;
+			var init = days[0].parentElement.nextElementSibling.style.display;
+
+            for (i = 0; i < days.length; i++) {
+				var content = days[i].parentElement.nextElementSibling;
+				if (init === "block") {
+					content.style.display = "none";
+				} else {
+					content.style.display = "block";
+				}
+			}
+        }
+
+		function showDps() {
+            var dpsTables = document.getElementsByClassName("dpsTable");
+			var i;
+
+			for (i = 0; i < dpsTables.length; i++) {
+				if (dpsTables[i].style.display === "none") {
+					dpsTables[i].style.display = "table";
+                } else {
+					dpsTables[i].style.display = "none";
+                }
+            }
+  		} 
+    </script>
+</body>
+</html>
