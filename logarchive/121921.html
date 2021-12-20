@@ -1,0 +1,3015 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Raid Timeline</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #272b30;
+            font-family: Helvetica, sans-serif;
+            overflow-y: scroll;
+        }
+
+        /* Header stuff */
+        .header {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .noselect {
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Old versions of Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
+        }
+
+        .box {
+            margin-top: 20px;
+            margin-bottom: 0px;
+            padding: 0px;
+            position: relative;
+            left: 25%;
+            border-style: solid;
+            border-width: 5px;
+            border-color: #aaa;
+            width: 50%;
+            border-radius: 6px;
+            background-color: #444950;
+            cursor: pointer;
+        }
+
+            .box:hover {
+                background-color: #555;
+            }
+
+        .text {
+            color: #aaa;
+            text-align: center;
+            padding-bottom: 10px;
+        }
+
+
+        /* The actual timeline (the vertical ruler) */
+        .timeline {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: none;
+            overflow: hidden;
+        }
+
+            /* The actual timeline (the vertical ruler) */
+            .timeline::after {
+                content: '';
+                position: absolute;
+                width: 6px;
+                background-color: #aaa;
+                top: 0;
+                bottom: 0;
+                left: 50%;
+                margin-left: -3px;
+            }
+
+        /* Container around content */
+        .container {
+            padding: 10px 40px;
+            position: relative;
+            background-color: inherit;
+            width: 50%;
+        }
+
+            /* The circles on the timeline */
+            .container::after {
+                content: '';
+                position: absolute;
+                width: 25px;
+                height: 25px;
+                right: -17px;
+                background-color: white;
+                border: 4px solid #aaa;
+                top: 15px;
+                border-radius: 50%;
+                z-index: 1;
+            }
+
+            .container.right::after {
+                background-color: #272b30;
+                background-image: url("https://wiki.guildwars2.com/images/4/46/Cross_red.png");
+                background-repeat: no-repeat;
+                background-position-x: 50%;
+                background-position-y: 75%;
+                background-size: 95%;
+                border: 4px solid #aaa;
+            }
+
+            .container.left::after {
+                background-color: #272b30;
+                background-image: url("https://wiki.guildwars2.com/images/5/52/Tick_green.png");
+                background-repeat: no-repeat;
+                background-position-x: 50%;
+                background-position-y: 75%;
+                background-size: 90%;
+                border: 4px solid #aaa;
+            }
+
+        /* Place the container to the left */
+        .left {
+            left: 0;
+        }
+
+        /* Place the container to the right */
+        .right {
+            left: 50%;
+            border-color: red;
+        }
+
+        /* Add arrows to the left container (pointing right) */
+        .left::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 22px;
+            width: 0;
+            z-index: 1;
+            right: 30px;
+            border: medium solid #444950;
+            border-width: 10px 0 10px 10px;
+            border-color: transparent transparent transparent #444950;
+        }
+
+        /* Add arrows to the right container (pointing left) */
+        .right::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 22px;
+            width: 0;
+            z-index: 1;
+            left: 30px;
+            border: medium solid #444950;
+            border-width: 10px 10px 10px 0;
+            border-color: transparent #444950 transparent transparent;
+        }
+
+        /* Fix the circle for containers on the right side */
+        .right::after {
+            left: -16px;
+        }
+
+        /* The actual content */
+        .content {
+            padding: 20px 30px;
+            background-color: #444950;
+            position: relative;
+            border-radius: 6px;
+        }
+
+        table {
+            font-family: Helvetica, sans-serif;
+            border-collapse: collapse;
+            width: 75%;
+            text-align: center;
+            margin-top: 10px;
+            position: relative;
+            left: 12%;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 2px;
+        }
+
+        tr {
+            background-color: #31363c;
+        }
+
+            tr:nth-child(even) {
+                background-color: #3d444b;
+            }
+
+
+        li a img {
+            position: relative;
+            top: 3px;
+            height: 16px;
+            width: 16px;
+            margin-right: 5px;
+        }
+
+
+        ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #333;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 10;
+        }
+
+        li {
+            float: left;
+        }
+
+            li a {
+                display: block;
+                color: #aaa;
+                text-align: center;
+                padding: 14px 16px;
+                text-decoration: none;
+            }
+
+                li a:hover:not(.active) {
+                    background-color: #111;
+                }
+
+                li a.active {
+                    background-color: #4CAF50;
+                    color: white;
+                    cursor: default;
+                }
+
+            li.placeholder {
+                display: block;
+                background: #aaa;
+                margin: 5px 0px 5px 0px;
+                padding-top: 40px;
+                padding-left: 2px;
+                margin-top: 4px;
+                margin: 4px 4px;
+            }
+
+        .raids {
+            margin-top: 70px;
+        }
+
+        /* Media queries - Responsive timeline on screens less than 600px wide */
+        @media screen and (max-width: 600px) {
+            /* Place the timelime to the left */
+            .timeline::after {
+                left: 31px;
+            }
+
+            .box {
+                width: 100%;
+                left: 0%;
+            }
+
+            /* Full-width containers */
+            .container {
+                width: 100%;
+                padding-left: 70px;
+                padding-right: 25px;
+            }
+
+                /* Make sure that all arrows are pointing leftwards */
+                .container::before {
+                    left: 60px;
+                    border: medium solid white;
+                    border-width: 10px 10px 10px 0;
+                    border-color: transparent white transparent transparent;
+                }
+
+            /* Make sure all circles are at the same spot */
+            .left::after, .right::after {
+                left: 15px;
+            }
+
+            /* Make all right containers behave like the left ones */
+            .right {
+                left: 0%;
+            }
+
+            .raids {
+                margin-top: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="menu">
+        <ul>
+            <li>
+                <a href="#" class="active" id="dpsButton" onclick="showDps(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/6/67/Event_swords_%28map_icon%29.png">Show dps
+                </a>
+            </li>
+            <li>
+                <a href="#" class="" id="ccButton" onclick="showCc(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/a/ae/Unshakable.png">Show cc
+                </a>
+            </li>
+            <li>
+                <a href="#" class="" id="resButton" onclick="showRes(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/3/3d/Downed_ally.png">Show resurrects
+                </a>
+            </li>
+            <li>
+                <a href="#" class="" id="mechanicsButton" onclick="showMechanics(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/e/e2/Event_wrench_%28map_icon%29.png">Show mechanics
+                </a>
+            </li>
+            <li class="placeholder"></li>
+            <li>
+                <a href="#" class="" onclick="showAll(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/8/86/Raid_%28map_icon%29.png">Show/Hide all days
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="raids">
+        
+				<div class="header noselect">
+					<div class="box">
+						<div class="text">
+							<h2 style="text-align: center; margin-top: 15px; margin-bottom: 5px;">12/19/2021</h2>
+							<div style="padding: 5px;">
+								 <img src="https://wiki.guildwars2.com/images/2/20/Event_star_red_%28map_icon%29.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Total Raid time">
+									<b>Total:</b> 3h 21m 36s
+								 <img src="https://wiki.guildwars2.com/images/d/d4/Casino_Blitz_%28map_icon%29.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Fight time">
+									<b>Fight:</b> 2h 8m 48s
+							     <img src="https://wiki.guildwars2.com/images/c/c6/Downed_enemy.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Down time">
+									<b>Down:</b> 1h 12m 48s
+							 </div>
+							<div style="padding: 5px;">
+								<img src="https://wiki.guildwars2.com/images/thumb/b/b0/Red_Boss.png/20px-Red_Boss.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of different bosses">
+									9
+								<img src="https://wiki.guildwars2.com/images/5/52/Tick_green.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of kills">
+									13
+								<img src="https://wiki.guildwars2.com/images/4/46/Cross_red.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of fails">
+									23
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="timeline">
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/uPkG-20211219-202251_sh" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_d_d4_Mini_Desmina.png" alt="Soulless Horror" width="64" height="64" style="float: right;">
+						<h2>Soulless Horror</h2>
+						<p>8:19:10 PM &rArr; 8:22:52 PM (3m 42s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 7620320">36421 dps</td>
+						<td>21.44%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 6812329">32559 dps</td>
+						<td>19.16%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total Damage: 5778205">27616 dps</td>
+						<td>16.25%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 1896">1896 cc</td>
+						<td>29.71%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total CC: 1200">1200 cc</td>
+						<td>18.81%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 800">800 cc</td>
+						<td>12.54%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/sXgs-20211219-202838_rr" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_thumb_7_7b_Gold_River_of_Souls_Trophy.jpg_220px-Gold_River_of_Souls_Trophy.jpg" alt="River of Souls" width="64" height="64" style="float: right;">
+						<h2>River of Souls</h2>
+						<p>8:25:27 PM &rArr; 8:28:39 PM (3m 12s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/mNgo-20211219-203308_bk" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_3_37_Mini_Broken_King.png" alt="Statue of Ice" width="64" height="64" style="float: right;">
+						<h2>Statue of Ice</h2>
+						<p>8:31:17 PM &rArr; 8:33:09 PM (1m 52s)
+					</a>
+					
+					<div title="51.34% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 51.34%, 51.34%, green 48.66%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total Damage: 1732303">15493 dps</td>
+						<td>33.97%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 1303318">11656 dps</td>
+						<td>25.56%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 989427">8849 dps</td>
+						<td>19.40%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total res: 14.053">14.053s (2x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 12.007">12.007s (2x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total res: 10.376">10.376s (3x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/ZUzp-20211219-203712_bk" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_3_37_Mini_Broken_King.png" alt="Statue of Ice" width="64" height="64" style="float: right;">
+						<h2>Statue of Ice</h2>
+						<p>8:33:39 PM &rArr; 8:37:12 PM (3m 33s)
+					</a>
+					
+					<div title="6.8% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 6.8%, 6.8%, green 93.2%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total Damage: 3621067">16954 dps</td>
+						<td>37.59%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 2261768">10589 dps</td>
+						<td>23.48%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 1378059">6452 dps</td>
+						<td>14.30%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 10.53">10.53s (2x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 7.412">7.412s (3x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/niS4-20211219-203837_bk" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_3_37_Mini_Broken_King.png" alt="Statue of Ice" width="64" height="64" style="float: right;">
+						<h2>Statue of Ice</h2>
+						<p>8:37:54 PM &rArr; 8:38:38 PM (0m 44s)
+					</a>
+					
+					<div title="77.15% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 77.15%, 77.15%, green 22.849999999999994%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 666903">14992 dps</td>
+						<td>28.41%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 616218">13853 dps</td>
+						<td>26.25%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total Damage: 570419">12823 dps</td>
+						<td>24.30%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 4.51">4.51s (4x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total res: 4.036">4.036s (2x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/4e4h-20211219-204216_bk" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_3_37_Mini_Broken_King.png" alt="Statue of Ice" width="64" height="64" style="float: right;">
+						<h2>Statue of Ice</h2>
+						<p>8:39:11 PM &rArr; 8:42:17 PM (3m 6s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total Damage: 2725306">14884 dps</td>
+						<td>24.71%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 2600167">14200 dps</td>
+						<td>23.58%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 2302375">12574 dps</td>
+						<td>20.88%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 20.647">20.647s (4x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 19.97">19.97s (2x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total res: 19.274">19.274s (1x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/KL8R-20211219-204438_se" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_thumb_2_24_Eater_of_Souls__28Hall_of_Chains_29.jpg_194px-Eater_of_Souls__28Hall_of_Chains_29.jpg" alt="Statue of Death" width="64" height="64" style="float: right;">
+						<h2>Statue of Death</h2>
+						<p>8:42:41 PM &rArr; 8:44:41 PM (2m 0s)
+					</a>
+					
+					<div title="12.12% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 12.12%, 12.12%, green 87.88%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 950347">8082 dps</td>
+						<td>29.42%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total Damage: 735627">6256 dps</td>
+						<td>22.77%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 562714">4785 dps</td>
+						<td>17.42%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 6.369">6.369s (2x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 6.35">6.35s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 3.886">3.886s (3x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/KAq5-20211219-204720_se" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_thumb_2_24_Eater_of_Souls__28Hall_of_Chains_29.jpg_194px-Eater_of_Souls__28Hall_of_Chains_29.jpg" alt="Statue of Death" width="64" height="64" style="float: right;">
+						<h2>Statue of Death</h2>
+						<p>8:45:18 PM &rArr; 8:47:21 PM (2m 3s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 1461353">12079 dps</td>
+						<td>29.40%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total Damage: 882960">7298 dps</td>
+						<td>17.76%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 858222">7093 dps</td>
+						<td>17.26%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total res: 1.643">1.643s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/tPkn-20211219-210138_ca" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/eLyIWd2.png" alt="Conjured Amalgamate" width="64" height="64" style="float: right;">
+						<h2>Conjured Amalgamate</h2>
+						<p>8:58:15 PM &rArr; 9:01:39 PM (3m 24s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 6106342">30625 dps</td>
+						<td>16.74%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 5658265">28378 dps</td>
+						<td>15.51%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 5390288">27034 dps</td>
+						<td>14.77%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 200">200 cc</td>
+						<td>44.44%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 150">150 cc</td>
+						<td>33.33%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total CC: 100">100 cc</td>
+						<td>22.22%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 4.795">4.795s (5x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 3.877">3.877s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>froacus.6892</td> 
+						<td title="Total res: 3.671">3.671s (2x)</td>
+					</tr></table><table class="mechanicsTable" style="display: none;"><tr style="color: #aaa">
+						<th>Player</th>
+						<th title="Pulverize (Arm Slam)">Slam</th>
+						<th title="Junk Absorption (Purple Balls during collect)">Balls</th>
+						<th title="Junk Fall (Falling Debris)">Junk</th>
+						<th title="Tremor (Field adjacent to Arm Slam)">Tremor</th>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td>
+						<td>0</td>
+						<td>1</td>
+						<td>0</td>
+						<td>4</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td>
+						<td>0</td>
+						<td>0</td>
+						<td>1</td>
+						<td>3</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td>
+						<td>1</td>
+						<td>13</td>
+						<td>1</td>
+						<td>3</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/4wzQ-20211219-210825_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>9:07:46 PM &rArr; 9:08:27 PM (0m 41s)
+					</a>
+					
+					<div title="71.61% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 71.61%, 71.61%, green 28.39%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 1028875">25027 dps</td>
+						<td>21.04%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 795656">19354 dps</td>
+						<td>16.27%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total Damage: 755687">18382 dps</td>
+						<td>15.46%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table><table class="mechanicsTable" style="display: none;"><tr style="color: #aaa">
+						<th>Player</th>
+						<th title="Waterlogged (stacking water debuff)">Debuff</th>
+						<th title="Kenut mechanics (Wave, Tornado & Y Field)">Kenut</th>
+						<th title="Nikare mechanics (Charge, Pool, Bubbles & Lauch Fields)">Nikare</th>
+					</tr>
+					<tr style="color: #aaa">
+						<td>froacus.6892</td>
+						<td>0</td>
+						<td>0</td>
+						<td>5</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td>
+						<td>0</td>
+						<td>0</td>
+						<td>4</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td>
+						<td>0</td>
+						<td>0</td>
+						<td>1</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/kFMs-20211219-211425_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>9:09:21 PM &rArr; 9:14:26 PM (5m 5s)
+					</a>
+					
+					<div title="5.86% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 5.86%, 5.86%, green 94.14%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="100% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 100%, 100%, green 0%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 6171056">20244 dps</td>
+						<td>20.16%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 5506115">18062 dps</td>
+						<td>17.98%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total Damage: 5169235">16957 dps</td>
+						<td>16.88%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total CC: 1450">1450 cc</td>
+						<td>21.64%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total CC: 1400">1400 cc</td>
+						<td>20.90%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 1200">1200 cc</td>
+						<td>17.91%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 12.12">12.12s (6x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 6.562">6.562s (3x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total res: 6.287">6.287s (1x)</td>
+					</tr></table><table class="mechanicsTable" style="display: none;"><tr style="color: #aaa">
+						<th>Player</th>
+						<th title="Waterlogged (stacking water debuff)">Debuff</th>
+						<th title="Kenut mechanics (Wave, Tornado & Y Field)">Kenut</th>
+						<th title="Nikare mechanics (Charge, Pool, Bubbles & Lauch Fields)">Nikare</th>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td>
+						<td>16</td>
+						<td>23</td>
+						<td>2</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td>
+						<td>10</td>
+						<td>3</td>
+						<td>10</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td>
+						<td>9</td>
+						<td>5</td>
+						<td>11</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/hogG-20211219-212040_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>9:15:35 PM &rArr; 9:20:42 PM (5m 7s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="10.07% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 10.07%, 10.07%, green 89.93%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 7285153">23758 dps</td>
+						<td>23.60%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 5148649">16790 dps</td>
+						<td>16.68%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 5133215">16740 dps</td>
+						<td>16.63%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total CC: 1600">1600 cc</td>
+						<td>24.24%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 1600">1600 cc</td>
+						<td>24.24%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 1200">1200 cc</td>
+						<td>18.18%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 16.601">16.601s (2x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 6.735">6.735s (3x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 5.844">5.844s (2x)</td>
+					</tr></table><table class="mechanicsTable" style="display: none;"><tr style="color: #aaa">
+						<th>Player</th>
+						<th title="Waterlogged (stacking water debuff)">Debuff</th>
+						<th title="Kenut mechanics (Wave, Tornado & Y Field)">Kenut</th>
+						<th title="Nikare mechanics (Charge, Pool, Bubbles & Lauch Fields)">Nikare</th>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td>
+						<td>22</td>
+						<td>26</td>
+						<td>1</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td>
+						<td>18</td>
+						<td>19</td>
+						<td>8</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td>
+						<td>5</td>
+						<td>3</td>
+						<td>12</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/tdaH-20211219-212628_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>9:21:42 PM &rArr; 9:26:29 PM (4m 47s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 6710797">23783 dps</td>
+						<td>20.77%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 6112215">21661 dps</td>
+						<td>18.92%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total Damage: 5820048">20626 dps</td>
+						<td>18.01%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total CC: 1600">1600 cc</td>
+						<td>26.36%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 1400">1400 cc</td>
+						<td>23.06%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 700">700 cc</td>
+						<td>11.53%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 5.569">5.569s (3x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 2.473">2.473s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 1.961">1.961s (1x)</td>
+					</tr></table><table class="mechanicsTable" style="display: none;"><tr style="color: #aaa">
+						<th>Player</th>
+						<th title="Waterlogged (stacking water debuff)">Debuff</th>
+						<th title="Kenut mechanics (Wave, Tornado & Y Field)">Kenut</th>
+						<th title="Nikare mechanics (Charge, Pool, Bubbles & Lauch Fields)">Nikare</th>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td>
+						<td>11</td>
+						<td>13</td>
+						<td>3</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td>
+						<td>3</td>
+						<td>3</td>
+						<td>9</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td>
+						<td>5</td>
+						<td>3</td>
+						<td>4</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/U4C0-20211219-213432_qadim" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f2_Mini_Qadim.png" alt="Qadim" width="64" height="64" style="float: right;">
+						<h2>Qadim</h2>
+						<p>9:32:20 PM &rArr; 9:34:33 PM (2m 13s)
+					</a>
+					
+					<div title="86.25% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 86.25%, 86.25%, green 13.75%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 571187">4656 dps</td>
+						<td>21.55%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 505499">4121 dps</td>
+						<td>19.07%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 452525">3689 dps</td>
+						<td>17.07%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 690">690 cc</td>
+						<td>60.53%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total CC: 300">300 cc</td>
+						<td>26.32%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 150">150 cc</td>
+						<td>13.16%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 13.886">13.886s (4x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 11.875">11.875s (6x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 8.282">8.282s (5x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/pVM3-20211219-213702_qadim" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f2_Mini_Qadim.png" alt="Qadim" width="64" height="64" style="float: right;">
+						<h2>Qadim</h2>
+						<p>9:34:57 PM &rArr; 9:37:03 PM (2m 6s)
+					</a>
+					
+					<div title="84.02% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 84.02%, 84.02%, green 15.980000000000004%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 699000">6031 dps</td>
+						<td>22.69%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 651823">5623 dps</td>
+						<td>21.16%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 618791">5338 dps</td>
+						<td>20.08%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 690">690 cc</td>
+						<td>57.98%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 300">300 cc</td>
+						<td>25.21%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total CC: 200">200 cc</td>
+						<td>16.81%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 10.776">10.776s (4x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 9.291">9.291s (3x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total res: 5.583">5.583s (3x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/ZrmS-20211219-214221_qadim" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f2_Mini_Qadim.png" alt="Qadim" width="64" height="64" style="float: right;">
+						<h2>Qadim</h2>
+						<p>9:37:51 PM &rArr; 9:42:22 PM (4m 31s)
+					</a>
+					
+					<div title="65.92% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 65.92%, 65.92%, green 34.08%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 1434147">5507 dps</td>
+						<td>21.87%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 1213467">4660 dps</td>
+						<td>18.50%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 1109488">4261 dps</td>
+						<td>16.92%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 3250">3250 cc</td>
+						<td>38.06%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 1590">1590 cc</td>
+						<td>18.62%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total CC: 1150">1150 cc</td>
+						<td>13.47%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 9.945">9.945s (3x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 9.728">9.728s (4x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 8.67">8.67s (2x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/TToO-20211219-214827_qadim" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f2_Mini_Qadim.png" alt="Qadim" width="64" height="64" style="float: right;">
+						<h2>Qadim</h2>
+						<p>9:42:46 PM &rArr; 9:48:27 PM (5m 41s)
+					</a>
+					
+					<div title="37.04% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 37.04%, 37.04%, green 62.96%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 3164145">9546 dps</td>
+						<td>26.05%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 2482067">7488 dps</td>
+						<td>20.44%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total Damage: 1781092">5373 dps</td>
+						<td>14.66%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 2760">2760 cc</td>
+						<td>30.19%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 1900">1900 cc</td>
+						<td>20.78%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total CC: 1282">1282 cc</td>
+						<td>14.02%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 19.415">19.415s (12x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 16.645">16.645s (7x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total res: 16.537">16.537s (9x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/cn5R-20211219-215253_qadim" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f2_Mini_Qadim.png" alt="Qadim" width="64" height="64" style="float: right;">
+						<h2>Qadim</h2>
+						<p>9:49:31 PM &rArr; 9:52:54 PM (3m 23s)
+					</a>
+					
+					<div title="65.97% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 65.97%, 65.97%, green 34.03%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 1415003">7328 dps</td>
+						<td>21.54%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 1164612">6031 dps</td>
+						<td>17.72%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total Damage: 1063751">5509 dps</td>
+						<td>16.19%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 1850">1850 cc</td>
+						<td>32.01%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 1680">1680 cc</td>
+						<td>29.07%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total CC: 600">600 cc</td>
+						<td>10.38%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 13.685">13.685s (4x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 11.295">11.295s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total res: 11.032">11.032s (2x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/j4uk-20211219-220059_sh" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_d_d4_Mini_Desmina.png" alt="Soulless Horror" width="64" height="64" style="float: right;">
+						<h2>Soulless Horror</h2>
+						<p>9:58:54 PM &rArr; 10:01:00 PM (2m 6s)
+					</a>
+					
+					<div title="48.69% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 48.69%, 48.69%, green 51.31%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 4309528">34127 dps</td>
+						<td>23.78%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total Damage: 3470523">27483 dps</td>
+						<td>19.15%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 3308203">26197 dps</td>
+						<td>18.25%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total CC: 500">500 cc</td>
+						<td>22.03%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 460">460 cc</td>
+						<td>20.26%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 400">400 cc</td>
+						<td>17.62%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/FTjX-20211219-220559_sh" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_d_d4_Mini_Desmina.png" alt="Soulless Horror" width="64" height="64" style="float: right;">
+						<h2>Soulless Horror</h2>
+						<p>10:01:29 PM &rArr; 10:06:00 PM (4m 31s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 8124191">31671 dps</td>
+						<td>22.93%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 7390608">28811 dps</td>
+						<td>20.86%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total Damage: 7338571">28608 dps</td>
+						<td>20.71%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total CC: 1400">1400 cc</td>
+						<td>20.22%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 1200">1200 cc</td>
+						<td>17.33%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 1180">1180 cc</td>
+						<td>17.04%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 3.366">3.366s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 2.299">2.299s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total res: 2.205">2.205s (1x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/dMqp-20211219-221036_rr" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_thumb_7_7b_Gold_River_of_Souls_Trophy.jpg_220px-Gold_River_of_Souls_Trophy.jpg" alt="River of Souls" width="64" height="64" style="float: right;">
+						<h2>River of Souls</h2>
+						<p>10:07:40 PM &rArr; 10:10:35 PM (2m 55s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/wYCP-20211219-221738_eyes" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_thumb_a_a7_Eye_of_Fate.jpg_188px-Eye_of_Fate.jpg" alt="Statue of Darkness" width="64" height="64" style="float: right;">
+						<h2>Statue of Darkness</h2>
+						<p>10:15:18 PM &rArr; 10:17:36 PM (2m 18s)
+					</a>
+					
+					<div title="26.99% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 26.99%, 26.99%, green 73.01%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="39.01% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 39.01%, 39.01%, green 60.99%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 907789">6587 dps</td>
+						<td>27.47%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 828119">6009 dps</td>
+						<td>25.06%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total Damage: 754182">5473 dps</td>
+						<td>22.83%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/V5uN-20211219-222109_eyes" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_thumb_a_a7_Eye_of_Fate.jpg_188px-Eye_of_Fate.jpg" alt="Statue of Darkness" width="64" height="64" style="float: right;">
+						<h2>Statue of Darkness</h2>
+						<p>10:18:28 PM &rArr; 10:21:08 PM (2m 40s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="8.2% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 8.2%, 8.2%, green 91.8%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 1218579">7640 dps</td>
+						<td>25.91%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total Damage: 1174744">7365 dps</td>
+						<td>24.97%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 1151235">7217 dps</td>
+						<td>24.47%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/l8HS-20211219-222438_eyes" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_thumb_a_a7_Eye_of_Fate.jpg_188px-Eye_of_Fate.jpg" alt="Statue of Darkness" width="64" height="64" style="float: right;">
+						<h2>Statue of Darkness</h2>
+						<p>10:21:55 PM &rArr; 10:24:37 PM (2m 42s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 1287202">8202 dps</td>
+						<td>26.21%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 1250902">7971 dps</td>
+						<td>25.47%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total Damage: 1161385">7400 dps</td>
+						<td>23.65%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total res: 2.63">2.63s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 2.197">2.197s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/LF8j-20211219-223111_dhuum" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e4_Mini_Dhuum.png" alt="Dhuum" width="64" height="64" style="float: right;">
+						<h2>Dhuum</h2>
+						<p>10:27:02 PM &rArr; 10:31:10 PM (4m 8s)
+					</a>
+					
+					<div title="68.01% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 68.01%, 68.01%, green 31.989999999999995%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 2534037">10218 dps</td>
+						<td>24.82%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 2216262">8936 dps</td>
+						<td>21.71%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total Damage: 1836841">7406 dps</td>
+						<td>17.99%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 6.619">6.619s (2x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 5.207">5.207s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 4.788">4.788s (2x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/flrP-20211219-223508_dhuum" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e4_Mini_Dhuum.png" alt="Dhuum" width="64" height="64" style="float: right;">
+						<h2>Dhuum</h2>
+						<p>10:31:35 PM &rArr; 10:35:07 PM (3m 32s)
+					</a>
+					
+					<div title="72.05% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 72.05%, 72.05%, green 27.950000000000003%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total Damage: 1743077">8214 dps</td>
+						<td>19.43%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 1633696">7699 dps</td>
+						<td>18.21%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 1610643">7590 dps</td>
+						<td>17.96%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 8.077">8.077s (4x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 6.496">6.496s (3x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 5.226">5.226s (3x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/6VH0-20211219-223902_dhuum" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e4_Mini_Dhuum.png" alt="Dhuum" width="64" height="64" style="float: right;">
+						<h2>Dhuum</h2>
+						<p>10:35:53 PM &rArr; 10:39:01 PM (3m 8s)
+					</a>
+					
+					<div title="89.78% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 89.78%, 89.78%, green 10.219999999999999%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 1029918">5478 dps</td>
+						<td>31.59%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 911510">4849 dps</td>
+						<td>27.96%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 653945">3478 dps</td>
+						<td>20.06%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 7.003">7.003s (2x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total res: 5.214">5.214s (2x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 4.144">4.144s (3x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/dvIV-20211219-224112_dhuum" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e4_Mini_Dhuum.png" alt="Dhuum" width="64" height="64" style="float: right;">
+						<h2>Dhuum</h2>
+						<p>10:40:03 PM &rArr; 10:41:11 PM (1m 8s)
+					</a>
+					
+					<div title="100% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 100%, 100%, green 0%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 0.8">0.8s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total res: 0.8">0.8s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 0.8">0.8s (1x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/1azl-20211219-224647_dhuum" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e4_Mini_Dhuum.png" alt="Dhuum" width="64" height="64" style="float: right;">
+						<h2>Dhuum</h2>
+						<p>10:41:37 PM &rArr; 10:46:46 PM (5m 9s)
+					</a>
+					
+					<div title="43.81% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 43.81%, 43.81%, green 56.19%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 3951601">12793 dps</td>
+						<td>21.95%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 3638793">11780 dps</td>
+						<td>20.21%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 3533357">11439 dps</td>
+						<td>19.63%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total res: 0.708">0.708s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/wilR-20211219-225614_dhuum" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e4_Mini_Dhuum.png" alt="Dhuum" width="64" height="64" style="float: right;">
+						<h2>Dhuum</h2>
+						<p>10:47:18 PM &rArr; 10:56:13 PM (8m 55s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 8257255">15484 dps</td>
+						<td>25.81%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 5818883">10911 dps</td>
+						<td>18.19%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total Damage: 4755683">8917 dps</td>
+						<td>14.86%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 12.212">12.212s (3x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total res: 12.129">12.129s (5x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 3.936">3.936s (2x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/mOEQ-20211219-230231_ca" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/eLyIWd2.png" alt="Conjured Amalgamate" width="64" height="64" style="float: right;">
+						<h2>Conjured Amalgamate</h2>
+						<p>11:00:44 PM &rArr; 11:02:30 PM (1m 46s)
+					</a>
+					
+					<div title="76.6% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 76.6%, 76.6%, green 23.400000000000006%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 1385040">13044 dps</td>
+						<td>19.75%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 982181">9250 dps</td>
+						<td>14.01%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 962171">9062 dps</td>
+						<td>13.72%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 300">300 cc</td>
+						<td>66.67%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 150">150 cc</td>
+						<td>33.33%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 8.358">8.358s (2x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total res: 7.88">7.88s (3x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total res: 4.55">4.55s (2x)</td>
+					</tr></table><table class="mechanicsTable" style="display: none;"><tr style="color: #aaa">
+						<th>Player</th>
+						<th title="Pulverize (Arm Slam)">Slam</th>
+						<th title="Junk Absorption (Purple Balls during collect)">Balls</th>
+						<th title="Junk Fall (Falling Debris)">Junk</th>
+						<th title="Tremor (Field adjacent to Arm Slam)">Tremor</th>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td>
+						<td>1</td>
+						<td>6</td>
+						<td>0</td>
+						<td>0</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td>
+						<td>0</td>
+						<td>0</td>
+						<td>0</td>
+						<td>1</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td>
+						<td>0</td>
+						<td>4</td>
+						<td>0</td>
+						<td>1</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/Q2Db-20211219-230650_ca" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/eLyIWd2.png" alt="Conjured Amalgamate" width="64" height="64" style="float: right;">
+						<h2>Conjured Amalgamate</h2>
+						<p>11:03:07 PM &rArr; 11:06:49 PM (3m 42s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 7678889">36457 dps</td>
+						<td>20.98%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 6644372">31546 dps</td>
+						<td>18.16%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 5930443">28156 dps</td>
+						<td>16.21%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 600">600 cc</td>
+						<td>80.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 150">150 cc</td>
+						<td>20.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table><table class="mechanicsTable" style="display: none;"><tr style="color: #aaa">
+						<th>Player</th>
+						<th title="Pulverize (Arm Slam)">Slam</th>
+						<th title="Junk Absorption (Purple Balls during collect)">Balls</th>
+						<th title="Junk Fall (Falling Debris)">Junk</th>
+						<th title="Tremor (Field adjacent to Arm Slam)">Tremor</th>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td>
+						<td>0</td>
+						<td>0</td>
+						<td>0</td>
+						<td>2</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td>
+						<td>0</td>
+						<td>3</td>
+						<td>0</td>
+						<td>3</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td>
+						<td>1</td>
+						<td>4</td>
+						<td>3</td>
+						<td>3</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/v5Qu-20211219-231747_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>11:12:34 PM &rArr; 11:17:46 PM (5m 12s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="1.94% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 1.94%, 1.94%, green 98.06%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 7568731">24291 dps</td>
+						<td>23.61%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 5754518">18469 dps</td>
+						<td>17.95%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 5390025">17299 dps</td>
+						<td>16.81%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 2000">2000 cc</td>
+						<td>25.41%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 1300">1300 cc</td>
+						<td>16.52%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 1200">1200 cc</td>
+						<td>15.25%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 12.434">12.434s (4x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 11.747">11.747s (4x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total res: 3.592">3.592s (1x)</td>
+					</tr></table><table class="mechanicsTable" style="display: none;"><tr style="color: #aaa">
+						<th>Player</th>
+						<th title="Waterlogged (stacking water debuff)">Debuff</th>
+						<th title="Kenut mechanics (Wave, Tornado & Y Field)">Kenut</th>
+						<th title="Nikare mechanics (Charge, Pool, Bubbles & Lauch Fields)">Nikare</th>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td>
+						<td>14</td>
+						<td>15</td>
+						<td>4</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td>
+						<td>6</td>
+						<td>15</td>
+						<td>4</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td>
+						<td>4</td>
+						<td>11</td>
+						<td>2</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/DHkI-20211219-232356_twins" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/6O5MT7v.png" alt="Twin Largos" width="64" height="64" style="float: right;">
+						<h2>Twin Largos</h2>
+						<p>11:18:57 PM &rArr; 11:23:55 PM (4m 58s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 7083737">25530 dps</td>
+						<td>22.02%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 5550138">20003 dps</td>
+						<td>17.25%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 5517851">19886 dps</td>
+						<td>17.15%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total CC: 1200">1200 cc</td>
+						<td>22.14%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 1000">1000 cc</td>
+						<td>18.45%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 900">900 cc</td>
+						<td>16.61%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 2.805">2.805s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table><table class="mechanicsTable" style="display: none;"><tr style="color: #aaa">
+						<th>Player</th>
+						<th title="Waterlogged (stacking water debuff)">Debuff</th>
+						<th title="Kenut mechanics (Wave, Tornado & Y Field)">Kenut</th>
+						<th title="Nikare mechanics (Charge, Pool, Bubbles & Lauch Fields)">Nikare</th>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td>
+						<td>11</td>
+						<td>13</td>
+						<td>3</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td>
+						<td>2</td>
+						<td>2</td>
+						<td>9</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td>
+						<td>4</td>
+						<td>6</td>
+						<td>5</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/S0R6-20211219-232807_qadim" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f2_Mini_Qadim.png" alt="Qadim" width="64" height="64" style="float: right;">
+						<h2>Qadim</h2>
+						<p>11:27:22 PM &rArr; 11:28:05 PM (0m 43s)
+					</a>
+					
+					<div title="100% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 100%, 100%, green 0%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 600">600 cc</td>
+						<td>52.17%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total CC: 400">400 cc</td>
+						<td>34.78%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 150">150 cc</td>
+						<td>13.04%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/WpyQ-20211219-234047_qadim" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f2_Mini_Qadim.png" alt="Qadim" width="64" height="64" style="float: right;">
+						<h2>Qadim</h2>
+						<p>11:28:41 PM &rArr; 11:40:46 PM (12m 5s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 4440829">6224 dps</td>
+						<td>23.07%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 4244484">5949 dps</td>
+						<td>22.05%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total Damage: 2960141">4149 dps</td>
+						<td>15.38%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 3050">3050 cc</td>
+						<td>26.54%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 2700">2700 cc</td>
+						<td>23.50%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total CC: 1890">1890 cc</td>
+						<td>16.45%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total res: 51.688">51.688s (11x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 39.941">39.941s (7x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 19.664">19.664s (5x)</td>
+					</tr></table>
+				</div>
+			</div>
+			</div>
+				<div class="header noselect">
+					<div class="box">
+						<div class="text">
+							<h2 style="text-align: center; margin-top: 15px; margin-bottom: 5px;">12/20/2021</h2>
+							<div style="padding: 5px;">
+								 <img src="https://wiki.guildwars2.com/images/2/20/Event_star_red_%28map_icon%29.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Total Raid time">
+									<b>Total:</b> 0h 29m 19s
+								 <img src="https://wiki.guildwars2.com/images/d/d4/Casino_Blitz_%28map_icon%29.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Fight time">
+									<b>Fight:</b> 0h 21m 23s
+							     <img src="https://wiki.guildwars2.com/images/c/c6/Downed_enemy.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Down time">
+									<b>Down:</b> 0h 7m 56s
+							 </div>
+							<div style="padding: 5px;">
+								<img src="https://wiki.guildwars2.com/images/thumb/b/b0/Red_Boss.png/20px-Red_Boss.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of different bosses">
+									3
+								<img src="https://wiki.guildwars2.com/images/5/52/Tick_green.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of kills">
+									3
+								<img src="https://wiki.guildwars2.com/images/4/46/Cross_red.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of fails">
+									1
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="timeline">
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/Yf4v-20211220-000636_sabir" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_fc_Mini_Air_Djinn.png" alt="Cardinal Sabir" width="64" height="64" style="float: right;">
+						<h2>Cardinal Sabir</h2>
+						<p>12:00:41 AM &rArr; 12:06:35 AM (5m 54s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 7884336">22548 dps</td>
+						<td>26.49%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 7236209">20694 dps</td>
+						<td>24.31%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total Damage: 6122149">17508 dps</td>
+						<td>20.57%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 5500">5500 cc</td>
+						<td>19.27%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>SaintXIV.3864</td> 
+						<td title="Total CC: 4200">4200 cc</td>
+						<td>14.71%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total CC: 4028">4028 cc</td>
+						<td>14.11%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total res: 2.294">2.294s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 2.121">2.121s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/emPw-20211220-001448_adina" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_a0_Mini_Earth_Djinn.png" alt="Cardinal Adina" width="64" height="64" style="float: right;">
+						<h2>Cardinal Adina</h2>
+						<p>12:09:01 AM &rArr; 12:14:47 AM (5m 46s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 4248922">12624 dps</td>
+						<td>18.36%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 4237184">12589 dps</td>
+						<td>18.31%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 4145751">12318 dps</td>
+						<td>17.91%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 3.235">3.235s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total res: 2.238">2.238s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total res: 1.668">1.668s (1x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/ADip-20211220-002004_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>12:18:46 AM &rArr; 12:20:04 AM (1m 18s)
+					</a>
+					
+					<div title="79.94% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 79.94%, 79.94%, green 20.060000000000002%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 1869206">24166 dps</td>
+						<td>19.71%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total Damage: 1708578">22089 dps</td>
+						<td>18.02%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total Damage: 1673852">21640 dps</td>
+						<td>17.65%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total CC: 1200">1200 cc</td>
+						<td>33.99%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 660">660 cc</td>
+						<td>18.70%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 500">500 cc</td>
+						<td>14.16%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total res: 0.8">0.8s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 0.8">0.8s (1x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/iAS5-20211220-003001_qpeer" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_8_8b_Mini_Qadim_the_Peerless.png" alt="Qadim the Peerless" width="64" height="64" style="float: right;">
+						<h2>Qadim the Peerless</h2>
+						<p>12:21:35 AM &rArr; 12:30:00 AM (8m 25s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr style="color: #aaa">
+						<td>Puffin.2136</td> 
+						<td title="Total Damage: 9035720">17952 dps</td>
+						<td>19.15%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Lastgate.1437</td> 
+						<td title="Total Damage: 8832817">17549 dps</td>
+						<td>18.72%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>BobHopper.9570</td> 
+						<td title="Total Damage: 7782547">15462 dps</td>
+						<td>16.49%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total CC: 2100">2100 cc</td>
+						<td>15.93%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total CC: 2000">2000 cc</td>
+						<td>15.17%</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>maiella.3657</td> 
+						<td title="Total CC: 1782">1782 cc</td>
+						<td>13.52%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr style="color: #aaa">
+						<td>ThisClockwork.2613</td> 
+						<td title="Total res: 16.793">16.793s (4x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Alexander X.2386</td> 
+						<td title="Total res: 13.537">13.537s (4x)</td>
+					</tr>
+					<tr style="color: #aaa">
+						<td>Apagon.6103</td> 
+						<td title="Total res: 5.535">5.535s (1x)</td>
+					</tr></table>
+				</div>
+			</div>
+			</div>
+    </div>
+
+    <script>
+        var coll = document.getElementsByClassName("box");
+        var i;
+
+        for (i = 0; i < coll.length; i++) {
+            coll[i].addEventListener("click", function () {
+                this.classList.toggle("active");
+                var content = this.parentElement.nextElementSibling;
+                if (content.style.display === "block") {
+                    content.style.display = "none";
+                } else {
+                    content.style.display = "block";
+                }
+            });
+        }
+
+        function showAll() {
+            var days = document.getElementsByClassName("box");
+            var i;
+            var init = days[0].parentElement.nextElementSibling.style.display;
+
+            for (i = 0; i < days.length; i++) {
+                var content = days[i].parentElement.nextElementSibling;
+                if (init === "block") {
+                    content.style.display = "none";
+                } else {
+                    content.style.display = "block";
+                }
+            }
+        }
+
+        function showDps() {
+            var dpsButton = document.getElementById("dpsButton")
+
+            if (dpsButton.classList.contains("active")) {
+                setTableVisibility("dpsTable", "none")
+                toggleButton("dpsButton", false);
+            }
+            else {
+                setTableVisibility("resTable", "none")
+                setTableVisibility("ccTable", "none")
+                setTableVisibility("dpsTable", "table")
+				setTableVisibility("mechanicsTable", "none")
+                toggleButton("resButton", false);
+                toggleButton("ccButton", false);
+                toggleButton("dpsButton", true);
+				toggleButton("mechanicsButton", false);
+            }
+        }
+
+        function setTableVisibility(tableName, visibility) {
+            var dpsTables = document.getElementsByClassName(tableName);
+            var i;
+
+            for (i = 0; i < dpsTables.length; i++) {
+                dpsTables[i].style.display = visibility;
+            }
+        }
+
+        function toggleButton(buttonName, status) {
+            var dpsButton = document.getElementById(buttonName)
+
+            if (status === false) {
+                dpsButton.classList.remove("active");
+            }
+            else {
+                dpsButton.classList.add("active");
+            }
+        }
+
+        function showCc() {
+            var dpsButton = document.getElementById("ccButton")
+
+            if (dpsButton.classList.contains("active")) {
+                setTableVisibility("ccTable", "none")
+                toggleButton("ccButton", false);
+            }
+            else {
+                setTableVisibility("resTable", "none")
+                setTableVisibility("ccTable", "table")
+                setTableVisibility("dpsTable", "none")
+				setTableVisibility("mechanicsTable", "none")
+                toggleButton("resButton", false);
+                toggleButton("ccButton", true);
+                toggleButton("dpsButton", false);
+				toggleButton("mechanicsButton", false);
+            }
+        }
+
+        function showRes() {
+            var dpsButton = document.getElementById("resButton")
+
+            if (dpsButton.classList.contains("active")) {
+                setTableVisibility("resTable", "none")
+                toggleButton("resButton", false);
+            }
+            else {
+                setTableVisibility("resTable", "table")
+                setTableVisibility("ccTable", "none")
+                setTableVisibility("dpsTable", "none")
+				setTableVisibility("mechanicsTable", "none")
+                toggleButton("resButton", true);
+                toggleButton("ccButton", false);
+                toggleButton("dpsButton", false);
+				toggleButton("mechanicsButton", false);
+            }
+        }
+
+		function showMechanics() {
+			var dpsButton = document.getElementById("mechanicsButton")
+
+			if (dpsButton.classList.contains("active")) {
+				setTableVisibility("mechanicsTable", "none")
+				toggleButton("mechanicsButton", false);
+			}
+			else {
+				setTableVisibility("resTable", "none")
+				setTableVisibility("ccTable", "none")
+				setTableVisibility("dpsTable", "none")
+				setTableVisibility("mechanicsTable", "table")
+				toggleButton("resButton", false);
+				toggleButton("ccButton", false);
+				toggleButton("dpsButton", false);
+				toggleButton("mechanicsButton", true);
+			}
+		}
+    </script>
+</body>
+</html>
