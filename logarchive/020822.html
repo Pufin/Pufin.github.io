@@ -1,0 +1,2319 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Raid Timeline</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #272b30;
+            font-family: Helvetica, sans-serif;
+            overflow-y: scroll;
+            color: #aaaaaa;
+        }
+
+        /* Header stuff */
+        .header {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .noselect {
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Old versions of Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Edge, Opera and Firefox */
+        }
+
+        .box {
+            margin-top: 20px;
+            margin-bottom: 0px;
+            padding: 0px;
+            position: relative;
+            left: 25%;
+            border-style: solid;
+            border-width: 5px;
+            border-color: #aaa;
+            width: 50%;
+            border-radius: 6px;
+            background-color: #444950;
+            cursor: pointer;
+        }
+
+            .box:hover {
+                background-color: #555;
+            }
+
+        .text {
+            color: #aaa;
+            text-align: center;
+            padding-bottom: 10px;
+        }
+
+
+        /* The actual timeline (the vertical ruler) */
+        .timeline {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: none;
+            overflow: hidden;
+        }
+
+            /* The actual timeline (the vertical ruler) */
+            .timeline::after {
+                content: '';
+                position: absolute;
+                width: 6px;
+                background-color: #aaa;
+                top: 0;
+                bottom: 0;
+                left: 50%;
+                margin-left: -3px;
+            }
+
+        /* Container around content */
+        .container {
+            padding: 10px 40px;
+            position: relative;
+            background-color: inherit;
+            width: 50%;
+        }
+
+            /* The circles on the timeline */
+            .container::after {
+                content: '';
+                position: absolute;
+                width: 25px;
+                height: 25px;
+                right: -17px;
+                background-color: white;
+                border: 4px solid #aaa;
+                top: 15px;
+                border-radius: 50%;
+                z-index: 1;
+            }
+
+            .container.right::after {
+                background-color: #272b30;
+                background-image: url("https://wiki.guildwars2.com/images/4/46/Cross_red.png");
+                background-repeat: no-repeat;
+                background-position-x: 50%;
+                background-position-y: 75%;
+                background-size: 95%;
+                border: 4px solid #aaa;
+            }
+
+            .container.left::after {
+                background-color: #272b30;
+                background-image: url("https://wiki.guildwars2.com/images/5/52/Tick_green.png");
+                background-repeat: no-repeat;
+                background-position-x: 50%;
+                background-position-y: 75%;
+                background-size: 90%;
+                border: 4px solid #aaa;
+            }
+
+        /* Place the container to the left */
+        .left {
+            left: 0;
+        }
+
+        /* Place the container to the right */
+        .right {
+            left: 50%;
+            border-color: red;
+        }
+
+        /* Add arrows to the left container (pointing right) */
+        .left::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 22px;
+            width: 0;
+            z-index: 1;
+            right: 30px;
+            border: medium solid #444950;
+            border-width: 10px 0 10px 10px;
+            border-color: transparent transparent transparent #444950;
+        }
+
+        /* Add arrows to the right container (pointing left) */
+        .right::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 22px;
+            width: 0;
+            z-index: 1;
+            left: 30px;
+            border: medium solid #444950;
+            border-width: 10px 10px 10px 0;
+            border-color: transparent #444950 transparent transparent;
+        }
+
+        /* Fix the circle for containers on the right side */
+        .right::after {
+            left: -16px;
+        }
+
+        /* The actual content */
+        .content {
+            padding: 20px 30px;
+            background-color: #444950;
+            position: relative;
+            border-radius: 6px;
+        }
+
+        table {
+            font-family: Helvetica, sans-serif;
+            border-collapse: collapse;
+            width: 75%;
+            text-align: center;
+            margin-top: 10px;
+            position: relative;
+            left: 12%;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 2px;
+        }
+
+        tr {
+            background-color: #31363c;
+        }
+
+        tr:nth-child(even) {
+            background-color: #3d444b;
+        }
+        
+        th .boonIcon {
+            height: 24px; 
+            width: 24px;
+        }
+        
+        .boonColumn {
+            min-width: 35px;
+        }
+
+        li a img {
+            position: relative;
+            top: 3px;
+            height: 16px;
+            width: 16px;
+            margin-right: 5px;
+        }
+
+
+        ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #333;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 10;
+        }
+
+        li {
+            float: left;
+        }
+
+            li a {
+                display: block;
+                color: #aaa;
+                text-align: center;
+                padding: 14px 16px;
+                text-decoration: none;
+            }
+
+                li a:hover:not(.active) {
+                    background-color: #111;
+                }
+
+                li a.active {
+                    background-color: #4CAF50;
+                    color: white;
+                    cursor: default;
+                }
+
+            li.placeholder {
+                display: block;
+                background: #aaa;
+                margin: 5px 0px 5px 0px;
+                padding-top: 40px;
+                padding-left: 2px;
+                margin-top: 4px;
+                margin: 4px 4px;
+            }
+
+        .raids {
+            margin-top: 70px;
+        }
+
+        /* Media queries - Responsive timeline on screens less than 600px wide */
+        @media screen and (max-width: 600px) {
+            /* Place the timelime to the left */
+            .timeline::after {
+                left: 31px;
+            }
+
+            .box {
+                width: 100%;
+                left: 0%;
+            }
+
+            /* Full-width containers */
+            .container {
+                width: 100%;
+                padding-left: 70px;
+                padding-right: 25px;
+            }
+
+                /* Make sure that all arrows are pointing leftwards */
+                .container::before {
+                    left: 60px;
+                    border: medium solid white;
+                    border-width: 10px 10px 10px 0;
+                    border-color: transparent white transparent transparent;
+                }
+
+            /* Make sure all circles are at the same spot */
+            .left::after, .right::after {
+                left: 15px;
+            }
+
+            /* Make all right containers behave like the left ones */
+            .right {
+                left: 0%;
+            }
+
+            .raids {
+                margin-top: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="menu">
+        <ul>
+            <li>
+                <a href="#" class="active" id="dpsButton" onclick="showDps(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/6/67/Event_swords_%28map_icon%29.png">Show dps
+                </a>
+            </li>
+            <li>
+                <a href="#" class="" id="ccButton" onclick="showCc(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/a/ae/Unshakable.png">Show cc
+                </a>
+            </li>
+            <li>
+                <a href="#" class="" id="boonButton" onclick="showBoons(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/1/11/Event_shield_%28map_icon%29.png">Show boons
+                </a>
+            </li>
+            <li>
+                <a href="#" class="" id="resButton" onclick="showRes(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/3/3d/Downed_ally.png">Show resurrects
+                </a>
+            </li>
+            <li>
+                <a href="#" class="" id="mechanicsButton" onclick="showMechanics(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/e/e2/Event_wrench_%28map_icon%29.png">Show mechanics
+                </a>
+            </li>
+            <li class="placeholder"></li>
+            <li>
+                <a href="#" class="" onclick="showAll(); return false;">
+                    <img src="https://wiki.guildwars2.com/images/8/86/Raid_%28map_icon%29.png">Show/Hide all days
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="raids">
+        
+				<div class="header noselect">
+					<div class="box">
+						<div class="text">
+							<h2 style="text-align: center; margin-top: 15px; margin-bottom: 5px;">2/8/2022</h2>
+							<div style="padding: 5px;">
+								 <img src="https://wiki.guildwars2.com/images/2/20/Event_star_red_%28map_icon%29.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Total Raid time">
+									<b>Total:</b> 1h 47m 38s
+								 <img src="https://wiki.guildwars2.com/images/d/d4/Casino_Blitz_%28map_icon%29.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Fight time">
+									<b>Fight:</b> 0h 54m 25s
+							     <img src="https://wiki.guildwars2.com/images/c/c6/Downed_enemy.png"
+									style="position: relative; top: 12px; left: 3px; height: 32px; width: 32px;" title="Down time">
+									<b>Down:</b> 0h 53m 13s
+							 </div>
+							<div style="padding: 5px;">
+								<img src="https://wiki.guildwars2.com/images/thumb/b/b0/Red_Boss.png/20px-Red_Boss.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of different bosses">
+									13
+								<img src="https://wiki.guildwars2.com/images/5/52/Tick_green.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of kills">
+									13
+								<img src="https://wiki.guildwars2.com/images/4/46/Cross_red.png" style="position: relative; top: 4px; left: 0px;"
+									title="# of fails">
+									1
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="timeline">
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/gv90-20220208-220236_vg" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_fb_Mini_Vale_Guardian.png" alt="Vale Guardian" width="64" height="64" style="float: right;">
+						<h2>Vale Guardian</h2>
+						<p>7:59:00 PM &rArr; 8:02:35 PM (3m 35s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total Damage: 4338263">20541 dps</td>
+						<td>19.66%</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total Damage: 3901546">18473 dps</td>
+						<td>17.68%</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 3549092">16804 dps</td>
+						<td>16.08%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total CC: 1300">1300 cc</td>
+						<td>22.77%</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total CC: 1250">1250 cc</td>
+						<td>21.89%</td>
+					</tr>
+					<tr>
+						<td>El Cubano Loco.2390</td> 
+						<td title="Total CC: 1050">1050 cc</td>
+						<td>18.39%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr>
+						<td>SkyeGate.1378</td> 
+						<td title="Total res: 8.861">8.861s (6x)</td>
+					</tr>
+					<tr>
+						<td>El Cubano Loco.2390</td> 
+						<td title="Total res: 8.249">8.249s (5x)</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total res: 7.523">7.523s (3x)</td>
+					</tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_7_7c_Might.png" class="boonIcon" title="Might">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_46_Fury.png" class="boonIcon" title="Fury">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b4_Quickness.png" class="boonIcon" title="Quickness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4c_Alacrity.png" class="boonIcon" title="Alacrity">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_6_6c_Protection.png" class="boonIcon" title="Protection">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_53_Regeneration.png" class="boonIcon" title="Regeneration">
+					</th></tr><tr>
+						<td class="boonColumn" title="79%">
+							20
+						</td>
+						<td class="boonColumn">
+							79%
+						</td>
+						<td class="boonColumn">
+							79%
+						</td>
+						<td class="boonColumn">
+							67%
+						</td>
+						<td class="boonColumn">
+							13%
+						</td>
+						<td class="boonColumn">
+							74%
+						</td></tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f4_Vigor.png" class="boonIcon" title="Vigor">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e5_Aegis.png" class="boonIcon" title="Aegis">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_ae_Stability.png" class="boonIcon" title="Stability">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_af_Swiftness.png" class="boonIcon" title="Swiftness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4b_Resistance.png" class="boonIcon" title="Resistance">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_0_06_Resolution.png" class="boonIcon" title="Resolution">
+					</th></tr><tr>
+						<td class="boonColumn">
+							38%
+						</td>
+						<td class="boonColumn">
+							28%
+						</td>
+						<td class="boonColumn" title="1%">
+							0
+						</td>
+						<td class="boonColumn">
+							75%
+						</td>
+						<td class="boonColumn">
+							1%
+						</td>
+						<td class="boonColumn">
+							4%
+						</td></tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/MNUr-20220208-221418_gors" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_d_d1_Mini_Gorseval_the_Multifarious.png" alt="Gorseval the Multifarious" width="64" height="64" style="float: right;">
+						<h2>Gorseval the Multifarious</h2>
+						<p>8:11:19 PM &rArr; 8:14:17 PM (2m 58s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total Damage: 3522732">20082 dps</td>
+						<td>16.40%</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total Damage: 3399775">19381 dps</td>
+						<td>15.83%</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 3167493">18056 dps</td>
+						<td>14.75%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total CC: 2900">2900 cc</td>
+						<td>27.46%</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 2250">2250 cc</td>
+						<td>21.31%</td>
+					</tr>
+					<tr>
+						<td>SkyeGate.1378</td> 
+						<td title="Total CC: 2060">2060 cc</td>
+						<td>19.51%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr>
+						<td>SkyeGate.1378</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>El Cubano Loco.2390</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_7_7c_Might.png" class="boonIcon" title="Might">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_46_Fury.png" class="boonIcon" title="Fury">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b4_Quickness.png" class="boonIcon" title="Quickness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4c_Alacrity.png" class="boonIcon" title="Alacrity">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_6_6c_Protection.png" class="boonIcon" title="Protection">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_53_Regeneration.png" class="boonIcon" title="Regeneration">
+					</th></tr><tr>
+						<td class="boonColumn" title="79%">
+							19
+						</td>
+						<td class="boonColumn">
+							79%
+						</td>
+						<td class="boonColumn">
+							78%
+						</td>
+						<td class="boonColumn">
+							76%
+						</td>
+						<td class="boonColumn">
+							3%
+						</td>
+						<td class="boonColumn">
+							63%
+						</td></tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f4_Vigor.png" class="boonIcon" title="Vigor">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e5_Aegis.png" class="boonIcon" title="Aegis">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_ae_Stability.png" class="boonIcon" title="Stability">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_af_Swiftness.png" class="boonIcon" title="Swiftness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_0_06_Resolution.png" class="boonIcon" title="Resolution">
+					</th></tr><tr>
+						<td class="boonColumn">
+							24%
+						</td>
+						<td class="boonColumn">
+							23%
+						</td>
+						<td class="boonColumn" title="24%">
+							1
+						</td>
+						<td class="boonColumn">
+							38%
+						</td>
+						<td class="boonColumn">
+							24%
+						</td></tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/lrez-20220208-222140_sab" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_54_Mini_Sabetha.png" alt="Sabetha the Saboteur" width="64" height="64" style="float: right;">
+						<h2>Sabetha the Saboteur</h2>
+						<p>8:16:55 PM &rArr; 8:21:39 PM (4m 44s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total Damage: 5730755">20405 dps</td>
+						<td>16.81%</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total Damage: 5549755">19761 dps</td>
+						<td>16.28%</td>
+					</tr>
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total Damage: 5154846">18354 dps</td>
+						<td>15.12%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total CC: 400">400 cc</td>
+						<td>38.10%</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total CC: 350">350 cc</td>
+						<td>33.33%</td>
+					</tr>
+					<tr>
+						<td>El Cubano Loco.2390</td> 
+						<td title="Total CC: 150">150 cc</td>
+						<td>14.29%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr>
+						<td>El Cubano Loco.2390</td> 
+						<td title="Total res: 4.238">4.238s (2x)</td>
+					</tr>
+					<tr>
+						<td>MoZ.9143</td> 
+						<td title="Total res: 3.669">3.669s (1x)</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total res: 2.69">2.69s (2x)</td>
+					</tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_7_7c_Might.png" class="boonIcon" title="Might">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_46_Fury.png" class="boonIcon" title="Fury">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b4_Quickness.png" class="boonIcon" title="Quickness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4c_Alacrity.png" class="boonIcon" title="Alacrity">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_6_6c_Protection.png" class="boonIcon" title="Protection">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_53_Regeneration.png" class="boonIcon" title="Regeneration">
+					</th></tr><tr>
+						<td class="boonColumn" title="77%">
+							19
+						</td>
+						<td class="boonColumn">
+							77%
+						</td>
+						<td class="boonColumn">
+							73%
+						</td>
+						<td class="boonColumn">
+							68%
+						</td>
+						<td class="boonColumn">
+							3%
+						</td>
+						<td class="boonColumn">
+							61%
+						</td></tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f4_Vigor.png" class="boonIcon" title="Vigor">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e5_Aegis.png" class="boonIcon" title="Aegis">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_ae_Stability.png" class="boonIcon" title="Stability">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_af_Swiftness.png" class="boonIcon" title="Swiftness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4b_Resistance.png" class="boonIcon" title="Resistance">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_0_06_Resolution.png" class="boonIcon" title="Resolution">
+					</th></tr><tr>
+						<td class="boonColumn">
+							29%
+						</td>
+						<td class="boonColumn">
+							17%
+						</td>
+						<td class="boonColumn" title="10%">
+							0
+						</td>
+						<td class="boonColumn">
+							41%
+						</td>
+						<td class="boonColumn">
+							1%
+						</td>
+						<td class="boonColumn">
+							4%
+						</td></tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/jNTW-20220208-222819_sloth" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ed_Mini_Slubling.png" alt="Slothasor" width="64" height="64" style="float: right;">
+						<h2>Slothasor</h2>
+						<p>8:24:37 PM &rArr; 8:28:18 PM (3m 41s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total Damage: 4304878">20255 dps</td>
+						<td>22.65%</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total Damage: 3548899">16698 dps</td>
+						<td>18.68%</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 3051622">14358 dps</td>
+						<td>16.06%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total CC: 6350">6350 cc</td>
+						<td>35.63%</td>
+					</tr>
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total CC: 3550">3550 cc</td>
+						<td>19.92%</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 3150">3150 cc</td>
+						<td>17.68%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr>
+						<td>El Cubano Loco.2390</td> 
+						<td title="Total res: 11.747">11.747s (3x)</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total res: 4.438">4.438s (2x)</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total res: 3.665">3.665s (2x)</td>
+					</tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_7_7c_Might.png" class="boonIcon" title="Might">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_46_Fury.png" class="boonIcon" title="Fury">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b4_Quickness.png" class="boonIcon" title="Quickness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4c_Alacrity.png" class="boonIcon" title="Alacrity">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_6_6c_Protection.png" class="boonIcon" title="Protection">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_53_Regeneration.png" class="boonIcon" title="Regeneration">
+					</th></tr><tr>
+						<td class="boonColumn" title="73%">
+							17
+						</td>
+						<td class="boonColumn">
+							69%
+						</td>
+						<td class="boonColumn">
+							69%
+						</td>
+						<td class="boonColumn">
+							49%
+						</td>
+						<td class="boonColumn">
+							59%
+						</td>
+						<td class="boonColumn">
+							68%
+						</td></tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f4_Vigor.png" class="boonIcon" title="Vigor">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e5_Aegis.png" class="boonIcon" title="Aegis">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_ae_Stability.png" class="boonIcon" title="Stability">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_af_Swiftness.png" class="boonIcon" title="Swiftness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_0_06_Resolution.png" class="boonIcon" title="Resolution">
+					</th></tr><tr>
+						<td class="boonColumn">
+							25%
+						</td>
+						<td class="boonColumn">
+							22%
+						</td>
+						<td class="boonColumn" title="29%">
+							1
+						</td>
+						<td class="boonColumn">
+							70%
+						</td>
+						<td class="boonColumn">
+							25%
+						</td></tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/nn32-20220208-223606_trio" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/UZZQUdf.png" alt="Bandit Trio" width="64" height="64" style="float: right;">
+						<h2>Bandit Trio</h2>
+						<p>8:29:20 PM &rArr; 8:36:04 PM (6m 44s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div>
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total Damage: 3179736">7930 dps</td>
+						<td>19.88%</td>
+					</tr>
+					<tr>
+						<td>SkyeGate.1378</td> 
+						<td title="Total Damage: 2853060">7115 dps</td>
+						<td>17.84%</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 2706287">6749 dps</td>
+						<td>16.92%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr>
+						<td>MoZ.9143</td> 
+						<td title="Total CC: 1650">1650 cc</td>
+						<td>50.85%</td>
+					</tr>
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total CC: 550">550 cc</td>
+						<td>16.95%</td>
+					</tr>
+					<tr>
+						<td>El Cubano Loco.2390</td> 
+						<td title="Total CC: 450">450 cc</td>
+						<td>13.87%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>El Cubano Loco.2390</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_7_7c_Might.png" class="boonIcon" title="Might">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_46_Fury.png" class="boonIcon" title="Fury">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b4_Quickness.png" class="boonIcon" title="Quickness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4c_Alacrity.png" class="boonIcon" title="Alacrity">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_6_6c_Protection.png" class="boonIcon" title="Protection">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_53_Regeneration.png" class="boonIcon" title="Regeneration">
+					</th></tr><tr>
+						<td class="boonColumn" title="70%">
+							14
+						</td>
+						<td class="boonColumn">
+							69%
+						</td>
+						<td class="boonColumn">
+							58%
+						</td>
+						<td class="boonColumn">
+							28%
+						</td>
+						<td class="boonColumn">
+							41%
+						</td>
+						<td class="boonColumn">
+							60%
+						</td></tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f4_Vigor.png" class="boonIcon" title="Vigor">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e5_Aegis.png" class="boonIcon" title="Aegis">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_ae_Stability.png" class="boonIcon" title="Stability">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_af_Swiftness.png" class="boonIcon" title="Swiftness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4b_Resistance.png" class="boonIcon" title="Resistance">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_0_06_Resolution.png" class="boonIcon" title="Resolution">
+					</th></tr><tr>
+						<td class="boonColumn">
+							22%
+						</td>
+						<td class="boonColumn">
+							15%
+						</td>
+						<td class="boonColumn" title="19%">
+							1
+						</td>
+						<td class="boonColumn">
+							58%
+						</td>
+						<td class="boonColumn">
+							2%
+						</td>
+						<td class="boonColumn">
+							12%
+						</td></tr></table><table class="mechanicsTable" style="display: none;"><tr>
+						<th>Player</th>
+						<th title="Hail of Bullets (Zane Cone Shot)">Zane Cone</th>
+						<th title="Fiery Vortex (Tornado)">Tornado</th>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td>
+						<td>14</td>
+						<td>1</td>
+					</tr>
+					<tr>
+						<td>freddy.9524</td>
+						<td>10</td>
+						<td>4</td>
+					</tr>
+					<tr>
+						<td>El Cubano Loco.2390</td>
+						<td>11</td>
+						<td>1</td>
+					</tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/jj4A-20220208-224347_matt" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_5d_Mini_Matthias_Abomination.png" alt="Matthias Gabrel" width="64" height="64" style="float: right;">
+						<h2>Matthias Gabrel</h2>
+						<p>8:39:26 PM &rArr; 8:43:46 PM (4m 20s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total Damage: 5336209">21446 dps</td>
+						<td>20.46%</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total Damage: 5305075">21321 dps</td>
+						<td>20.34%</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total Damage: 5304800">21320 dps</td>
+						<td>20.34%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total CC: 2292">2292 cc</td>
+						<td>35.86%</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 2080">2080 cc</td>
+						<td>32.54%</td>
+					</tr>
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total CC: 850">850 cc</td>
+						<td>13.30%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr>
+						<td>Antwon.5397</td> 
+						<td title="Total res: 4.729">4.729s (2x)</td>
+					</tr>
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total res: 4.174">4.174s (2x)</td>
+					</tr>
+					<tr>
+						<td>El Cubano Loco.2390</td> 
+						<td title="Total res: 1.797">1.797s (2x)</td>
+					</tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_7_7c_Might.png" class="boonIcon" title="Might">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_46_Fury.png" class="boonIcon" title="Fury">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b4_Quickness.png" class="boonIcon" title="Quickness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4c_Alacrity.png" class="boonIcon" title="Alacrity">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_6_6c_Protection.png" class="boonIcon" title="Protection">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_53_Regeneration.png" class="boonIcon" title="Regeneration">
+					</th></tr><tr>
+						<td class="boonColumn" title="79%">
+							19
+						</td>
+						<td class="boonColumn">
+							77%
+						</td>
+						<td class="boonColumn">
+							77%
+						</td>
+						<td class="boonColumn">
+							51%
+						</td>
+						<td class="boonColumn">
+							78%
+						</td>
+						<td class="boonColumn">
+							77%
+						</td></tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f4_Vigor.png" class="boonIcon" title="Vigor">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e5_Aegis.png" class="boonIcon" title="Aegis">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_ae_Stability.png" class="boonIcon" title="Stability">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_af_Swiftness.png" class="boonIcon" title="Swiftness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4b_Resistance.png" class="boonIcon" title="Resistance">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_0_06_Resolution.png" class="boonIcon" title="Resolution">
+					</th></tr><tr>
+						<td class="boonColumn">
+							73%
+						</td>
+						<td class="boonColumn">
+							20%
+						</td>
+						<td class="boonColumn" title="48%">
+							1
+						</td>
+						<td class="boonColumn">
+							78%
+						</td>
+						<td class="boonColumn">
+							34%
+						</td>
+						<td class="boonColumn">
+							63%
+						</td></tr></table>
+				</div>
+			</div>
+			<div class="container right">
+				<div class="content">
+					<a href="https://dps.report/Ypa6-20220208-225955_kc" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ea_Mini_Keep_Construct.png" alt="Keep Construct" width="64" height="64" style="float: right;">
+						<h2>Keep Construct</h2>
+						<p>8:59:42 PM &rArr; 8:59:54 PM (0m 12s)
+					</a>
+					
+					<div title="97.74% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 97.74%, 97.74%, green 2.260000000000005%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total Damage: 454970">36968 dps</td>
+						<td>36.53%</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 439767">35733 dps</td>
+						<td>35.31%</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total Damage: 304658">24754 dps</td>
+						<td>24.46%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr>
+						<td>MoZ.9143</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>MoZ.9143</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_7_7c_Might.png" class="boonIcon" title="Might">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_46_Fury.png" class="boonIcon" title="Fury">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b4_Quickness.png" class="boonIcon" title="Quickness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4c_Alacrity.png" class="boonIcon" title="Alacrity">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_6_6c_Protection.png" class="boonIcon" title="Protection">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_53_Regeneration.png" class="boonIcon" title="Regeneration">
+					</th></tr><tr>
+						<td class="boonColumn" title="26%">
+							3
+						</td>
+						<td class="boonColumn">
+							41%
+						</td>
+						<td class="boonColumn">
+							45%
+						</td>
+						<td class="boonColumn">
+							14%
+						</td>
+						<td class="boonColumn">
+							19%
+						</td>
+						<td class="boonColumn">
+							33%
+						</td></tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f4_Vigor.png" class="boonIcon" title="Vigor">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e5_Aegis.png" class="boonIcon" title="Aegis">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_af_Swiftness.png" class="boonIcon" title="Swiftness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_0_06_Resolution.png" class="boonIcon" title="Resolution">
+					</th></tr><tr>
+						<td class="boonColumn">
+							10%
+						</td>
+						<td class="boonColumn">
+							15%
+						</td>
+						<td class="boonColumn">
+							52%
+						</td>
+						<td class="boonColumn">
+							11%
+						</td></tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/FDXQ-20220208-230748_kc" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_ea_Mini_Keep_Construct.png" alt="Keep Construct" width="64" height="64" style="float: right;">
+						<h2>Keep Construct</h2>
+						<p>9:01:16 PM &rArr; 9:07:47 PM (6m 31s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total Damage: 11744811">30492 dps</td>
+						<td>21.39%</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 11445093">29714 dps</td>
+						<td>20.84%</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total Damage: 9969203">25882 dps</td>
+						<td>18.16%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr>
+						<td>SkyeGate.1378</td> 
+						<td title="Total CC: 2070">2070 cc</td>
+						<td>23.71%</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total CC: 2050">2050 cc</td>
+						<td>23.48%</td>
+					</tr>
+					<tr>
+						<td>MoZ.9143</td> 
+						<td title="Total CC: 1350">1350 cc</td>
+						<td>15.46%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_7_7c_Might.png" class="boonIcon" title="Might">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_46_Fury.png" class="boonIcon" title="Fury">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b4_Quickness.png" class="boonIcon" title="Quickness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4c_Alacrity.png" class="boonIcon" title="Alacrity">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_6_6c_Protection.png" class="boonIcon" title="Protection">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_53_Regeneration.png" class="boonIcon" title="Regeneration">
+					</th></tr><tr>
+						<td class="boonColumn" title="78%">
+							16
+						</td>
+						<td class="boonColumn">
+							79%
+						</td>
+						<td class="boonColumn">
+							75%
+						</td>
+						<td class="boonColumn">
+							67%
+						</td>
+						<td class="boonColumn">
+							67%
+						</td>
+						<td class="boonColumn">
+							76%
+						</td></tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f4_Vigor.png" class="boonIcon" title="Vigor">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e5_Aegis.png" class="boonIcon" title="Aegis">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_ae_Stability.png" class="boonIcon" title="Stability">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_af_Swiftness.png" class="boonIcon" title="Swiftness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4b_Resistance.png" class="boonIcon" title="Resistance">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_0_06_Resolution.png" class="boonIcon" title="Resolution">
+					</th></tr><tr>
+						<td class="boonColumn">
+							29%
+						</td>
+						<td class="boonColumn">
+							28%
+						</td>
+						<td class="boonColumn" title="8%">
+							0
+						</td>
+						<td class="boonColumn">
+							74%
+						</td>
+						<td class="boonColumn">
+							0%
+						</td>
+						<td class="boonColumn">
+							19%
+						</td></tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/qwIw-dfsdf_tc" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://i.imgur.com/xpQnu35.png" alt="Twisted Castle" width="64" height="64" style="float: right;">
+						<h2>Twisted Castle</h2>
+						<p>9:08:11 PM &rArr; 9:11:30 PM (3m 19s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr>
+					<tr>
+						<td>MoZ.9143</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total Damage: 0">0 dps</td>
+						<td>0.00%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr>
+						<td>MoZ.9143</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>MoZ.9143</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_7_7c_Might.png" class="boonIcon" title="Might">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_46_Fury.png" class="boonIcon" title="Fury">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b4_Quickness.png" class="boonIcon" title="Quickness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4c_Alacrity.png" class="boonIcon" title="Alacrity">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_6_6c_Protection.png" class="boonIcon" title="Protection">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_53_Regeneration.png" class="boonIcon" title="Regeneration">
+					</th></tr><tr>
+						<td class="boonColumn" title="43%">
+							6
+						</td>
+						<td class="boonColumn">
+							32%
+						</td>
+						<td class="boonColumn">
+							29%
+						</td>
+						<td class="boonColumn">
+							17%
+						</td>
+						<td class="boonColumn">
+							6%
+						</td>
+						<td class="boonColumn">
+							32%
+						</td></tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f4_Vigor.png" class="boonIcon" title="Vigor">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e5_Aegis.png" class="boonIcon" title="Aegis">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_ae_Stability.png" class="boonIcon" title="Stability">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_af_Swiftness.png" class="boonIcon" title="Swiftness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4b_Resistance.png" class="boonIcon" title="Resistance">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_0_06_Resolution.png" class="boonIcon" title="Resolution">
+					</th></tr><tr>
+						<td class="boonColumn">
+							7%
+						</td>
+						<td class="boonColumn">
+							10%
+						</td>
+						<td class="boonColumn" title="23%">
+							1
+						</td>
+						<td class="boonColumn">
+							56%
+						</td>
+						<td class="boonColumn">
+							4%
+						</td>
+						<td class="boonColumn">
+							22%
+						</td></tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/V7Hz-20220208-231918_xera" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4b_Mini_Xera.png" alt="Xera" width="64" height="64" style="float: right;">
+						<h2>Xera</h2>
+						<p>9:15:00 PM &rArr; 9:19:17 PM (4m 17s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total Damage: 4579889">18198 dps</td>
+						<td>19.09%</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total Damage: 3960866">15738 dps</td>
+						<td>16.51%</td>
+					</tr>
+					<tr>
+						<td>SkyeGate.1378</td> 
+						<td title="Total Damage: 3766058">14964 dps</td>
+						<td>15.70%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total CC: 600">600 cc</td>
+						<td>30.38%</td>
+					</tr>
+					<tr>
+						<td>Antwon.5397</td> 
+						<td title="Total CC: 475">475 cc</td>
+						<td>24.05%</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 300">300 cc</td>
+						<td>15.19%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_7_7c_Might.png" class="boonIcon" title="Might">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_46_Fury.png" class="boonIcon" title="Fury">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b4_Quickness.png" class="boonIcon" title="Quickness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4c_Alacrity.png" class="boonIcon" title="Alacrity">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_6_6c_Protection.png" class="boonIcon" title="Protection">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_53_Regeneration.png" class="boonIcon" title="Regeneration">
+					</th></tr><tr>
+						<td class="boonColumn" title="73%">
+							16
+						</td>
+						<td class="boonColumn">
+							70%
+						</td>
+						<td class="boonColumn">
+							68%
+						</td>
+						<td class="boonColumn">
+							58%
+						</td>
+						<td class="boonColumn">
+							41%
+						</td>
+						<td class="boonColumn">
+							67%
+						</td></tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f4_Vigor.png" class="boonIcon" title="Vigor">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e5_Aegis.png" class="boonIcon" title="Aegis">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_ae_Stability.png" class="boonIcon" title="Stability">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_af_Swiftness.png" class="boonIcon" title="Swiftness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4b_Resistance.png" class="boonIcon" title="Resistance">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_0_06_Resolution.png" class="boonIcon" title="Resolution">
+					</th></tr><tr>
+						<td class="boonColumn">
+							34%
+						</td>
+						<td class="boonColumn">
+							22%
+						</td>
+						<td class="boonColumn" title="5%">
+							0
+						</td>
+						<td class="boonColumn">
+							68%
+						</td>
+						<td class="boonColumn">
+							1%
+						</td>
+						<td class="boonColumn">
+							4%
+						</td></tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/aG4H-20220208-232648_cairn" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b8_Mini_Cairn_the_Indomitable.png" alt="Cairn" width="64" height="64" style="float: right;">
+						<h2>Cairn</h2>
+						<p>9:24:50 PM &rArr; 9:26:46 PM (1m 56s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total Damage: 3899905">34444 dps</td>
+						<td>19.72%</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 3600904">31803 dps</td>
+						<td>18.21%</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total Damage: 3576713">31589 dps</td>
+						<td>18.09%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr>
+						<td>MoZ.9143</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr>
+						<td>El Cubano Loco.2390</td> 
+						<td title="Total res: 2.801">2.801s (1x)</td>
+					</tr>
+					<tr>
+						<td>SkyeGate.1378</td> 
+						<td title="Total res: 1.642">1.642s (1x)</td>
+					</tr>
+					<tr>
+						<td>MoZ.9143</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_7_7c_Might.png" class="boonIcon" title="Might">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_46_Fury.png" class="boonIcon" title="Fury">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b4_Quickness.png" class="boonIcon" title="Quickness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4c_Alacrity.png" class="boonIcon" title="Alacrity">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_6_6c_Protection.png" class="boonIcon" title="Protection">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_53_Regeneration.png" class="boonIcon" title="Regeneration">
+					</th></tr><tr>
+						<td class="boonColumn" title="88%">
+							21
+						</td>
+						<td class="boonColumn">
+							86%
+						</td>
+						<td class="boonColumn">
+							84%
+						</td>
+						<td class="boonColumn">
+							81%
+						</td>
+						<td class="boonColumn">
+							57%
+						</td>
+						<td class="boonColumn">
+							66%
+						</td></tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f4_Vigor.png" class="boonIcon" title="Vigor">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e5_Aegis.png" class="boonIcon" title="Aegis">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_ae_Stability.png" class="boonIcon" title="Stability">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_af_Swiftness.png" class="boonIcon" title="Swiftness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4b_Resistance.png" class="boonIcon" title="Resistance">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_0_06_Resolution.png" class="boonIcon" title="Resolution">
+					</th></tr><tr>
+						<td class="boonColumn">
+							35%
+						</td>
+						<td class="boonColumn">
+							56%
+						</td>
+						<td class="boonColumn" title="36%">
+							1
+						</td>
+						<td class="boonColumn">
+							87%
+						</td>
+						<td class="boonColumn">
+							3%
+						</td>
+						<td class="boonColumn">
+							54%
+						</td></tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/mj49-20220208-233059_mo" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_c_c8_Mini_Mursaat_Overseer.png" alt="Mursaat Overseer" width="64" height="64" style="float: right;">
+						<h2>Mursaat Overseer</h2>
+						<p>9:29:07 PM &rArr; 9:30:58 PM (1m 51s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total Damage: 3454145">32407 dps</td>
+						<td>15.78%</td>
+					</tr>
+					<tr>
+						<td>Apagon.6103</td> 
+						<td title="Total Damage: 3391845">31822 dps</td>
+						<td>15.50%</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total Damage: 3287156">30840 dps</td>
+						<td>15.02%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr>
+						<td>MoZ.9143</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr>
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total CC: 0">0 cc</td>
+						<td>0.00%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr>
+						<td>El Cubano Loco.2390</td> 
+						<td title="Total res: 1.996">1.996s (1x)</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>MoZ.9143</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_7_7c_Might.png" class="boonIcon" title="Might">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_46_Fury.png" class="boonIcon" title="Fury">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b4_Quickness.png" class="boonIcon" title="Quickness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4c_Alacrity.png" class="boonIcon" title="Alacrity">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_6_6c_Protection.png" class="boonIcon" title="Protection">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_53_Regeneration.png" class="boonIcon" title="Regeneration">
+					</th></tr><tr>
+						<td class="boonColumn" title="79%">
+							20
+						</td>
+						<td class="boonColumn">
+							78%
+						</td>
+						<td class="boonColumn">
+							79%
+						</td>
+						<td class="boonColumn">
+							79%
+						</td>
+						<td class="boonColumn">
+							54%
+						</td>
+						<td class="boonColumn">
+							68%
+						</td></tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f4_Vigor.png" class="boonIcon" title="Vigor">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e5_Aegis.png" class="boonIcon" title="Aegis">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_ae_Stability.png" class="boonIcon" title="Stability">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_af_Swiftness.png" class="boonIcon" title="Swiftness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_0_06_Resolution.png" class="boonIcon" title="Resolution">
+					</th></tr><tr>
+						<td class="boonColumn">
+							41%
+						</td>
+						<td class="boonColumn">
+							55%
+						</td>
+						<td class="boonColumn" title="12%">
+							0
+						</td>
+						<td class="boonColumn">
+							69%
+						</td>
+						<td class="boonColumn">
+							28%
+						</td></tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/X8xW-20220208-233852_sam" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f0_Mini_Samarog.png" alt="Samarog" width="64" height="64" style="float: right;">
+						<h2>Samarog</h2>
+						<p>9:32:58 PM &rArr; 9:38:51 PM (5m 53s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total Damage: 5048259">14475 dps</td>
+						<td>17.08%</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total Damage: 4860291">13936 dps</td>
+						<td>16.45%</td>
+					</tr>
+					<tr>
+						<td>MoZ.9143</td> 
+						<td title="Total Damage: 4111597">11789 dps</td>
+						<td>13.91%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr>
+						<td>Antwon.5397</td> 
+						<td title="Total CC: 7951">7951 cc</td>
+						<td>23.43%</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total CC: 7950">7950 cc</td>
+						<td>23.42%</td>
+					</tr>
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total CC: 4860">4860 cc</td>
+						<td>14.32%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr>
+						<td>MoZ.9143</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total res: 0">0s (0x)</td>
+					</tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_7_7c_Might.png" class="boonIcon" title="Might">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_46_Fury.png" class="boonIcon" title="Fury">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b4_Quickness.png" class="boonIcon" title="Quickness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4c_Alacrity.png" class="boonIcon" title="Alacrity">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_6_6c_Protection.png" class="boonIcon" title="Protection">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_53_Regeneration.png" class="boonIcon" title="Regeneration">
+					</th></tr><tr>
+						<td class="boonColumn" title="79%">
+							19
+						</td>
+						<td class="boonColumn">
+							77%
+						</td>
+						<td class="boonColumn">
+							77%
+						</td>
+						<td class="boonColumn">
+							67%
+						</td>
+						<td class="boonColumn">
+							41%
+						</td>
+						<td class="boonColumn">
+							65%
+						</td></tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f4_Vigor.png" class="boonIcon" title="Vigor">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e5_Aegis.png" class="boonIcon" title="Aegis">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_ae_Stability.png" class="boonIcon" title="Stability">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_af_Swiftness.png" class="boonIcon" title="Swiftness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_0_06_Resolution.png" class="boonIcon" title="Resolution">
+					</th></tr><tr>
+						<td class="boonColumn">
+							25%
+						</td>
+						<td class="boonColumn">
+							23%
+						</td>
+						<td class="boonColumn" title="3%">
+							0
+						</td>
+						<td class="boonColumn">
+							48%
+						</td>
+						<td class="boonColumn">
+							22%
+						</td></tr></table>
+				</div>
+			</div>
+			<div class="container left">
+				<div class="content">
+					<a href="https://dps.report/3Jvx-20220208-234639_dei" target="_blank" style="color: #aaa; text-decoration: none;">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e0_Mini_Ragged_White_Mantle_Figurehead.png" alt="Deimos" width="64" height="64" style="float: right;">
+						<h2>Deimos</h2>
+						<p>9:42:14 PM &rArr; 9:46:38 PM (4m 24s)
+					</a>
+					
+					<div title="0% left" style="background: rgba(0, 0, 0, 0)
+						linear-gradient(to right, red 0%, 0%, green 100%)
+						repeat scroll 0% 0%; height: 10px; width: 100%; border-radius: 5px; margin-top: 3px;">
+					</div><table class="dpsTable">
+					<tr>
+						<td>freddy.9524</td> 
+						<td title="Total Damage: 7390509">28955 dps</td>
+						<td>22.98%</td>
+					</tr>
+					<tr>
+						<td>SkyeGate.1378</td> 
+						<td title="Total Damage: 5860198">22959 dps</td>
+						<td>18.22%</td>
+					</tr>
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total Damage: 5483984">21485 dps</td>
+						<td>17.05%</td>
+					</tr></table><table class="ccTable" style="display: none;">
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total CC: 250">250 cc</td>
+						<td>45.45%</td>
+					</tr>
+					<tr>
+						<td>SkyeGate.1378</td> 
+						<td title="Total CC: 200">200 cc</td>
+						<td>36.36%</td>
+					</tr>
+					<tr>
+						<td>Antwon.5397</td> 
+						<td title="Total CC: 100">100 cc</td>
+						<td>18.18%</td>
+					</tr></table><table class="resTable" style="display: none;">
+					<tr>
+						<td>acumen.1980</td> 
+						<td title="Total res: 6.12">6.12s (1x)</td>
+					</tr>
+					<tr>
+						<td>Antwon.5397</td> 
+						<td title="Total res: 5.644">5.644s (1x)</td>
+					</tr>
+					<tr>
+						<td>WalrusTusK.2478</td> 
+						<td title="Total res: 3.804">3.804s (1x)</td>
+					</tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_7_7c_Might.png" class="boonIcon" title="Might">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_46_Fury.png" class="boonIcon" title="Fury">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_b_b4_Quickness.png" class="boonIcon" title="Quickness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4c_Alacrity.png" class="boonIcon" title="Alacrity">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_6_6c_Protection.png" class="boonIcon" title="Protection">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_5_53_Regeneration.png" class="boonIcon" title="Regeneration">
+					</th></tr><tr>
+						<td class="boonColumn" title="75%">
+							16
+						</td>
+						<td class="boonColumn">
+							62%
+						</td>
+						<td class="boonColumn">
+							58%
+						</td>
+						<td class="boonColumn">
+							56%
+						</td>
+						<td class="boonColumn">
+							34%
+						</td>
+						<td class="boonColumn">
+							52%
+						</td></tr></table><table class="boonTable" style="display: none;"><tr>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_f_f4_Vigor.png" class="boonIcon" title="Vigor">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_e_e5_Aegis.png" class="boonIcon" title="Aegis">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_ae_Stability.png" class="boonIcon" title="Stability">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_a_af_Swiftness.png" class="boonIcon" title="Swiftness">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_4_4b_Resistance.png" class="boonIcon" title="Resistance">
+					</th>
+					<th class="boonColumn">
+						<img src="https://dps.report/cache/https_wiki.guildwars2.com_images_0_06_Resolution.png" class="boonIcon" title="Resolution">
+					</th></tr><tr>
+						<td class="boonColumn">
+							22%
+						</td>
+						<td class="boonColumn">
+							15%
+						</td>
+						<td class="boonColumn" title="3%">
+							0
+						</td>
+						<td class="boonColumn">
+							31%
+						</td>
+						<td class="boonColumn">
+							0%
+						</td>
+						<td class="boonColumn">
+							4%
+						</td></tr></table>
+				</div>
+			</div>
+			</div>
+    </div>
+
+    <script>
+        var coll = document.getElementsByClassName("box");
+        var i;
+
+        for (i = 0; i < coll.length; i++) {
+            coll[i].addEventListener("click", function () {
+                this.classList.toggle("active");
+                var content = this.parentElement.nextElementSibling;
+                if (content.style.display === "block") {
+                    content.style.display = "none";
+                } else {
+                    content.style.display = "block";
+                }
+            });
+        }
+
+        function showAll() {
+            var days = document.getElementsByClassName("box");
+            var i;
+            var init = days[0].parentElement.nextElementSibling.style.display;
+
+            for (i = 0; i < days.length; i++) {
+                var content = days[i].parentElement.nextElementSibling;
+                if (init === "block") {
+                    content.style.display = "none";
+                } else {
+                    content.style.display = "block";
+                }
+            }
+        }
+
+        function showDps() {
+            var dpsButton = document.getElementById("dpsButton")
+
+            if (dpsButton.classList.contains("active")) {
+                setTableVisibility("dpsTable", "none")
+                toggleButton("dpsButton", false);
+            }
+            else {
+                setTableVisibility("resTable", "none")
+                setTableVisibility("ccTable", "none")
+                setTableVisibility("dpsTable", "table")
+                setTableVisibility("boonTable", "none")
+				setTableVisibility("mechanicsTable", "none")
+                toggleButton("resButton", false);
+                toggleButton("ccButton", false);
+                toggleButton("dpsButton", true);
+                toggleButton("boonButton", false);
+				toggleButton("mechanicsButton", false);
+            }
+        }
+
+        function setTableVisibility(tableName, visibility) {
+            var dpsTables = document.getElementsByClassName(tableName);
+            var i;
+
+            for (i = 0; i < dpsTables.length; i++) {
+                dpsTables[i].style.display = visibility;
+            }
+        }
+
+        function toggleButton(buttonName, status) {
+            var dpsButton = document.getElementById(buttonName)
+
+            if (status === false) {
+                dpsButton.classList.remove("active");
+            }
+            else {
+                dpsButton.classList.add("active");
+            }
+        }
+
+        function showCc() {
+            var dpsButton = document.getElementById("ccButton")
+
+            if (dpsButton.classList.contains("active")) {
+                setTableVisibility("ccTable", "none")
+                toggleButton("ccButton", false);
+            }
+            else {
+                setTableVisibility("resTable", "none")
+                setTableVisibility("ccTable", "table")
+                setTableVisibility("dpsTable", "none")
+                setTableVisibility("boonTable", "none")
+				setTableVisibility("mechanicsTable", "none")
+                toggleButton("resButton", false);
+                toggleButton("ccButton", true);
+                toggleButton("dpsButton", false);
+                toggleButton("boonButton", false);
+				toggleButton("mechanicsButton", false);
+            }
+        }
+
+        function showRes() {
+            var dpsButton = document.getElementById("resButton")
+
+            if (dpsButton.classList.contains("active")) {
+                setTableVisibility("resTable", "none")
+                toggleButton("resButton", false);
+            }
+            else {
+                setTableVisibility("resTable", "table")
+                setTableVisibility("ccTable", "none")
+                setTableVisibility("dpsTable", "none")
+                setTableVisibility("boonTable", "none")
+				setTableVisibility("mechanicsTable", "none")
+                toggleButton("resButton", true);
+                toggleButton("ccButton", false);
+                toggleButton("dpsButton", false);
+                toggleButton("boonButton", false);
+				toggleButton("mechanicsButton", false);
+            }
+        }
+
+		function showMechanics() {
+			var dpsButton = document.getElementById("mechanicsButton")
+
+			if (dpsButton.classList.contains("active")) {
+				setTableVisibility("mechanicsTable", "none")
+				toggleButton("mechanicsButton", false);
+			}
+			else {
+				setTableVisibility("resTable", "none")
+				setTableVisibility("ccTable", "none")
+				setTableVisibility("dpsTable", "none")
+                setTableVisibility("boonTable", "none")
+				setTableVisibility("mechanicsTable", "table")
+				toggleButton("resButton", false);
+				toggleButton("ccButton", false);
+				toggleButton("dpsButton", false);
+				toggleButton("boonButton", false);
+				toggleButton("mechanicsButton", true);
+			}
+        }
+
+        function showBoons() {
+            var button = document.getElementById("boonButton")
+
+            if (button.classList.contains("active")) {
+                setTableVisibility("boonTable", "none")
+                toggleButton("boonButton", false);
+            }
+            else {
+                setTableVisibility("resTable", "none")
+                setTableVisibility("ccTable", "none")
+                setTableVisibility("dpsTable", "none")
+                setTableVisibility("mechanicsTable", "none")
+                setTableVisibility("boonTable", "table")
+                toggleButton("resButton", false);
+                toggleButton("ccButton", false);
+                toggleButton("dpsButton", false);
+                toggleButton("mechanicsButton", false);
+                toggleButton("boonButton", true);
+            }
+        }
+    </script>
+</body>
+</html>
